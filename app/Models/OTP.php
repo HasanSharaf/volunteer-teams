@@ -9,14 +9,16 @@ class OTP extends Model
 {
     use HasFactory;
 
+    protected $table = 'otps';
+
     protected $fillable = [
-        'code',
+        'otp',
         'email',
-        'expire_time'
+        'expires_at'
     ];
 
     protected $casts = [
-        'expire_time' => 'datetime'
+        'expires_at' => 'datetime'
     ];
 
     // Scopes
@@ -27,30 +29,30 @@ class OTP extends Model
 
     public function scopeValid($query)
     {
-        return $query->where('expire_time', '>', now());
+        return $query->where('expires_at', '>', now());
     }
 
     public function scopeExpired($query)
     {
-        return $query->where('expire_time', '<=', now());
+        return $query->where('expires_at', '<=', now());
     }
 
     // Methods
     public function generateCode($length = 6)
     {
-        $this->code = str_pad(rand(0, pow(10, $length) - 1), $length, '0', STR_PAD_LEFT);
-        $this->expire_time = now()->addMinutes(5); // Default 5 minutes expiration
+        $this->otp = str_pad(rand(0, pow(10, $length) - 1), $length, '0', STR_PAD_LEFT);
+        $this->expires_at = now()->addMinutes(5); // Default 5 minutes expiration
         $this->save();
     }
 
     public function isValid()
     {
-        return $this->expire_time > now();
+        return $this->expires_at > now();
     }
 
     public function isExpired()
     {
-        return $this->expire_time <= now();
+        return $this->expires_at <= now();
     }
 
     public function verify($code)
@@ -59,7 +61,7 @@ class OTP extends Model
             return false;
         }
 
-        return $this->code === $code;
+        return $this->otp === $code;
     }
 
     public function getRemainingTime()
@@ -68,6 +70,6 @@ class OTP extends Model
             return 0;
         }
 
-        return now()->diffInSeconds($this->expire_time);
+        return now()->diffInSeconds($this->expires_at);
     }
 } 
