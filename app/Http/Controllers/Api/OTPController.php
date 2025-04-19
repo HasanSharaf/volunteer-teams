@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\OTP;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-
 class OTPController extends Controller
 {
     public function sendOTP(Request $request)
@@ -27,13 +25,6 @@ class OTPController extends Controller
                 'expires_at' => $expiresAt,
             ]);
 
-            // Log the OTP instead of sending email
-            Log::info('OTP Code', [
-                'email' => $request->email,
-                'otp' => $otp,
-                'expires_at' => $expiresAt
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'OTP sent successfully',
@@ -42,11 +33,6 @@ class OTPController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('OTP Error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send OTP',
@@ -83,11 +69,6 @@ class OTPController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('OTP Verification Error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to verify OTP',
