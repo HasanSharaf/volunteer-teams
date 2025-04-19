@@ -26,30 +26,36 @@ return new class extends Migration
         Schema::create('governments', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password');
             $table->timestamps();
         });
 
         Schema::create('volunteer_teams', function (Blueprint $table) {
             $table->id();
             $table->string('full_name');
-            $table->string('team_name');
-            $table->string('license_number')->unique();
-            $table->string('phone');
-            $table->string('bank_account_number')->unique();
+            $table->string('National_number')->unique();
+            $table->string('phone')->unique();
+            $table->enum('gender', ['ذكر', 'أنثى']);
+            $table->string('nationality');
+            $table->date('birth_date');
+            $table->string('image');
             $table->string('email')->unique();
             $table->string('password');
-            $table->foreignId('government_id')->nullable()->constrained('governments')->onDelete('set null');
-            $table->string('address')->nullable();
+            $table->boolean('status')->nullable()->default(false);
             $table->rememberToken();
             $table->timestamps();
         });
 
         Schema::create('business_informations', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('phone');
-            $table->string('address');
+            $table->string('team_name');
+            $table->string('bank_account_number')->unique();
+            $table->string('logo');
+            $table->string('log_image');
+            $table->string('license_number');
+     
+            $table->string('address')->nullable();
             $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
             $table->timestamps();
         });

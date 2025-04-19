@@ -14,27 +14,14 @@ class VolunteerTeam extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = [
-        'full_name',
-        'team_name',
-        'license_number',
-        'phone',
-        'bank_account_number',
-        'email',
-        'password',
-        'government_id',
-        'address'
-    ];
+    protected $guarded = []; 
+
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    public function government(): BelongsTo
-    {
-        return $this->belongsTo(Government::class);
-    }
 
     public function businessInformation(): HasOne
     {

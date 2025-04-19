@@ -23,16 +23,27 @@ use App\Http\Controllers\Api\OTPController;
 // Public routes
 Route::post('/volunteer/register', [AuthController::class, 'volunteerRegister']);
 Route::post('/volunteer/login', [AuthController::class, 'volunteerLogin']);
+
 Route::post('/team/register', [AuthController::class, 'teamRegister']);
 Route::post('/team/login', [AuthController::class, 'teamLogin']);
 Route::post('/send-otp', [OTPController::class, 'sendOTP']);
 Route::post('/verify-otp', [OTPController::class, 'verifyOTP']);
 
+
+Route::post('governments/login', [AuthController::class, 'loginGovernment']);
+
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
+    // Government routes
+    Route::get('profile/Government', [AuthController::class, 'profileGovernment']);
+    Route::post('profile/update/Government', [AuthController::class, 'updateProfileGovernment']);
+    
+
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
+
+    // Route::get('/user', [AuthController::class, 'user']);
 
     // Campaign Types routes
     Route::apiResource('campaign-types', CampaignTypeController::class);
