@@ -32,7 +32,6 @@ Route::post('/verify-otp', [OTPController::class, 'verifyOTP']);
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
 
     // Campaign Types routes
     Route::apiResource('campaign-types', CampaignTypeController::class);
