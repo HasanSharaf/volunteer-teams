@@ -34,7 +34,7 @@ return new class extends Migration
         Schema::create('volunteer_teams', function (Blueprint $table) {
             $table->id();
             $table->string('full_name');
-            $table->string('National_number')->unique();
+            $table->string('national_number')->unique();
             $table->string('phone')->unique();
             $table->enum('gender', ['ذكر', 'أنثى']);
             $table->string('nationality');
@@ -63,16 +63,15 @@ return new class extends Migration
         Schema::create('volunteers', function (Blueprint $table) {
             $table->id();
             $table->string('full_name');
-            $table->string('national_id')->unique();
-            $table->string('nationality');
-            $table->string('phone_number');
+            $table->string('national_number')->unique()->nullable();
+            $table->string('nationality')->nullable();
+            $table->string('phone_number')->nullable();
             $table->string('email')->unique();
             $table->string('password');
-            $table->date('birth_date');
+            $table->date('birth_date')->nullable();
             $table->string('image')->nullable();
             $table->integer('total_points')->default(0);
-            $table->foreignId('specialization_id')->constrained('specializations')->onDelete('cascade');
-            $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
+            $table->foreignId('specialization_id')->nullable()->constrained('specializations')->onDelete('cascade');
             $table->rememberToken();
             $table->timestamps();
         });

@@ -94,26 +94,26 @@ class AuthController extends Controller
         try {
             $request->validate([
                 'full_name' => 'required|string|max:255',
-                'national_id' => 'required|string',
-                'nationality' => 'required|string|max:255',
-                'phone_number' => 'required|string|max:255',
+                // 'national_number' => 'required|string',
+                // 'nationality' => 'required|string|max:255',
+                // 'phone_number' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:volunteers',
                 'password' => 'required|string|min:8',
-                'birth_date' => 'required|date',
-                'specialization_id' => 'required|exists:specializations,id',
-                'team_id' => 'required|exists:volunteer_teams,id',
+                // 'birth_date' => 'required|date',
+                // 'specialization_id' => 'required|exists:specializations,id',
+              
             ]);
 
             $volunteer = Volunteer::create([
                 'full_name' => $request->full_name,
-                'national_id' => $request->national_id,
-                'nationality' => $request->nationality,
-                'phone_number' => $request->phone_number,
+                // 'national_number' => $request->national_number,
+                // 'nationality' => $request->nationality,
+                // 'phone_number' => $request->phone_number,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'birth_date' => $request->birth_date,
-                'specialization_id' => $request->specialization_id,
-                'team_id' => $request->team_id,
+                // 'birth_date' => $request->birth_date,
+                // 'specialization_id' => $request->specialization_id,
+               
                 'total_points' => 0,
             ]);
 
@@ -146,11 +146,14 @@ class AuthController extends Controller
 
         $volunteer = Volunteer::where('email', $request->email)->first();
 
-        if (!$volunteer || !Hash::check($request->password, $volunteer->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+        
+        if (!Hash::check($request->password, $volunteer->password)) {
+            return response()->json([
+                'message' => 'The provided credentials are incorrect.',
+            ], 403);
         }
+
+    
 
         $token = $volunteer->createToken('auth_token')->plainTextToken;
 
@@ -161,12 +164,73 @@ class AuthController extends Controller
         ]);
     }
 
+    public function profileVolunteer(Request $request)
+    {
+        $volunteer = $request->user(); 
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Volunteer profile retrieved successfully',
+            'data' => $volunteer->with(['specialization'])->first(),
+        ]);
+    }
+
+    public function updateProfilevolunteer(Request $request)
+    {
+        $volunteer = $request->user();
+
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:volunteers,email,' . $volunteer->id,
+            'password' => 'sometimes|string|min:8',
+            'phone_number' => 'sometimes|string|max:255',
+            'nationality' => 'required|string|max:255',
+            'birth_date' => 'required|date_format:Y-m-d',
+            'national_number' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'specialization_id' => 'required|exists:specializations,id',
+        ]);
+        
+    
+        // رفع الصورة إذا كانت موجودة
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('uploads/volunteers'), $imageName);
+    
+            $volunteer->image = 'uploads/volunteers/' . $imageName;
+        }
+    
+        if ($request->has('password')) {
+            $volunteer->password = Hash::make($request->password);
+        }
+    
+        $volunteer->fill($request->except(['password', 'email', 'image']));
+        
+        if ($request->has('email')) {
+            $volunteer->email = $request->email;
+        }
+    
+        $volunteer->save();
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => $volunteer
+        ]);
+    }
+    
+
+
+
+
+
     /// teams
     public function teamRegister(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'full_name' => 'required|string|max:255',
-            'National_number' => 'required|string|unique:volunteer_teams',
+            'national_number' => 'required|string|unique:volunteer_teams',
             'phone' => 'required|string|max:255|unique:volunteer_teams',
             'gender' => 'required|in:ذكر,أنثى',
             'nationality' => 'required|string',
@@ -194,19 +258,17 @@ class AuthController extends Controller
         DB::beginTransaction();
     
         try {
-            // حفظ الصور في مجلد public/uploads
             $imagePath = $request->file('image')->move(public_path('uploads/volunteers'), uniqid() . '.' . $request->file('image')->getClientOriginalExtension());
             $logoPath = $request->file('logo')->move(public_path('uploads/logos'), uniqid() . '.' . $request->file('logo')->getClientOriginalExtension());
             $logImagePath = $request->file('log_image')->move(public_path('uploads/log'), uniqid() . '.' . $request->file('log_image')->getClientOriginalExtension());
     
-            // تحويل المسارات إلى relative
             $imageRelativePath = 'uploads/volunteers/' . basename($imagePath);
             $logoRelativePath = 'uploads/logos/' . basename($logoPath);
             $logImageRelativePath = 'uploads/log/' . basename($logImagePath);
     
             $volunteerTeam = VolunteerTeam::create([
                 'full_name' => $request->full_name,
-                'National_number' => $request->National_number,
+                'national_number' => $request->national_number,
                 'phone' => $request->phone,
                 'gender' => $request->gender,
                 'nationality' => $request->nationality,
@@ -259,14 +321,12 @@ class AuthController extends Controller
             ], 403); 
         }
     
-        // تحقق من كلمة المرور
         if (!Hash::check($request->password, $team->password)) {
             return response()->json([
                 'message' => 'The provided credentials are incorrect.',
             ], 403);
         }
     
-        // إذا كان الحساب مفعل وكلمة المرور صحيحة، أنشئ التوكن
         $token = $team->createToken('auth_token')->plainTextToken;
     
         return response()->json([

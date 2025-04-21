@@ -39,11 +39,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('profile/Government', [AuthController::class, 'profileGovernment']);
     Route::post('profile/update/Government', [AuthController::class, 'updateProfileGovernment']);
     
+    //volunteer
+    Route::get('/volunteer/profile', [AuthController::class, 'profileVolunteer']);
+    Route::post('/volunteer/profile/update', [AuthController::class, 'updateProfilevolunteer']);
 
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
-
-    // Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/user', [AuthController::class, 'user']);
 
     // Campaign Types routes
     Route::apiResource('campaign-types', CampaignTypeController::class);

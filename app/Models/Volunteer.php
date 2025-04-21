@@ -14,9 +14,12 @@ class Volunteer extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+
+    
+
     protected $fillable = [
         'full_name',
-        'national_id',
+        'national_number',
         'nationality',
         'phone_number',
         'email',
@@ -25,7 +28,7 @@ class Volunteer extends Authenticatable
         'total_points',
         'specialization_id',
         'birth_date',
-        'team_id'
+     
     ];
 
     protected $hidden = [
@@ -33,9 +36,7 @@ class Volunteer extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'birth_date' => 'date',
-    ];
+
 
     public function specialization(): BelongsTo
     {
