@@ -48,10 +48,7 @@ return [
             'driver' => 'sanctum',
             'provider' => 'volunteer_teams',
         ],
-        'government' => [
-            'driver' => 'sanctum',
-            'provider' => 'governments',
-        ],
+ 
     ],
 
     /*
@@ -85,10 +82,7 @@ return [
             'model' => App\Models\VolunteerTeam::class,
         ],
 
-        'governments' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Government::class,
-        ],
+   
 
         // 'users' => [
         //     'driver' => 'database',
@@ -134,12 +128,7 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
-        'governments' => [
-            'provider' => 'governments',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
-            'throttle' => 60,
-        ],
+   
     ],
 
     /*

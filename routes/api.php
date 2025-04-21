@@ -30,14 +30,12 @@ Route::post('/send-otp', [OTPController::class, 'sendOTP']);
 Route::post('/verify-otp', [OTPController::class, 'verifyOTP']);
 
 
-Route::post('governments/login', [AuthController::class, 'loginGovernment']);
 
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    // Government routes
-    Route::get('profile/Government', [AuthController::class, 'profileGovernment']);
-    Route::post('profile/update/Government', [AuthController::class, 'updateProfileGovernment']);
+
+
     
     //volunteer
     Route::get('/volunteer/profile', [AuthController::class, 'profileVolunteer']);

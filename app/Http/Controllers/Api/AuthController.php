@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Volunteer;
-use App\Models\Government;
+
 use Illuminate\Http\Request;
 use App\Models\VolunteerTeam;
 use App\Models\BusinessInformation;
@@ -19,70 +19,7 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
 
-    //Governments
-    public function loginGovernment(Request $request)
-    {
-        
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
 
-        $Government = Government::where('email', $request->email)->first();
-
-        if (!$Government || !Hash::check($request->password, $Government->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        $token = $Government->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Government logged in successfully',
-            'Government' => $Government,
-            'token' => $token,
-        ]);
-    }
-    
-
- 
-
-    public function updateProfileGovernment(Request $request)
-    {
-        $government = $request->user(); // احصل على المستخدم أولاً
-    
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:governments,email,' . $government->id,
-            'password' => 'nullable|string|min:8',
-        ]);
-    
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation Error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-    
-        $government->name = $request->name;
-        $government->email = $request->email;
-    
-        if ($request->password) {
-            $government->password = Hash::make($request->password);
-        }
-    
-        $government->save();
-    
-        return response()->json([
-            'status' => true,
-            'message' => 'Profile updated successfully',
-            'data' => [
-                'government' => $government
-            ]
-        ]);
-    }
     
     
 
