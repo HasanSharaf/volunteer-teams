@@ -2,40 +2,55 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Volunteer;
-use App\Models\VolunteerTeam;
+
 use Illuminate\Http\Request;
+use App\Models\VolunteerTeam;
+use App\Models\BusinessInformation;
+
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+
+
+    
+    
+
+
+
+    //Volunteer
     public function volunteerRegister(Request $request)
     {
         try {
             $request->validate([
                 'full_name' => 'required|string|max:255',
-                'national_id' => 'required|string',
-                'nationality' => 'required|string|max:255',
-                'phone_number' => 'required|string|max:255',
+                // 'national_number' => 'required|string',
+                // 'nationality' => 'required|string|max:255',
+                // 'phone_number' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:volunteers',
                 'password' => 'required|string|min:8',
-                'birth_date' => 'required|date',
-                'specialization_id' => 'required|exists:specializations,id',
-                'team_id' => 'required|exists:volunteer_teams,id',
+                // 'birth_date' => 'required|date',
+                // 'specialization_id' => 'required|exists:specializations,id',
+              
             ]);
 
             $volunteer = Volunteer::create([
                 'full_name' => $request->full_name,
-                'national_id' => $request->national_id,
-                'nationality' => $request->nationality,
-                'phone_number' => $request->phone_number,
+                // 'national_number' => $request->national_number,
+                // 'nationality' => $request->nationality,
+                // 'phone_number' => $request->phone_number,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'birth_date' => $request->birth_date,
-                'specialization_id' => $request->specialization_id,
-                'team_id' => $request->team_id,
+                // 'birth_date' => $request->birth_date,
+                // 'specialization_id' => $request->specialization_id,
+               
                 'total_points' => 0,
             ]);
 
@@ -68,11 +83,14 @@ class AuthController extends Controller
 
         $volunteer = Volunteer::where('email', $request->email)->first();
 
-        if (!$volunteer || !Hash::check($request->password, $volunteer->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+        
+        if (!Hash::check($request->password, $volunteer->password)) {
+            return response()->json([
+                'message' => 'The provided credentials are incorrect.',
+            ], 403);
         }
+
+    
 
         $token = $volunteer->createToken('auth_token')->plainTextToken;
 
@@ -83,36 +101,147 @@ class AuthController extends Controller
         ]);
     }
 
-    public function teamRegister(Request $request)
+    public function profileVolunteer(Request $request)
     {
+        $volunteer = $request->user(); 
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Volunteer profile retrieved successfully',
+            'data' => $volunteer->with(['specialization'])->first(),
+        ]);
+    }
+
+    public function updateProfilevolunteer(Request $request)
+    {
+        $volunteer = $request->user();
+
         $request->validate([
             'full_name' => 'required|string|max:255',
-            'team_name' => 'required|string|max:255',
-            'license_number' => 'required|string|unique:volunteer_teams',
-            'phone' => 'required|string|max:255',
-            'bank_account_number' => 'required|string|unique:volunteer_teams',
-            'email' => 'required|string|email|max:255|unique:volunteer_teams',
-            'password' => 'required|string|min:8',
+            'email' => 'required|string|email|max:255|unique:volunteers,email,' . $volunteer->id,
+            'password' => 'sometimes|string|min:8',
+            'phone_number' => 'sometimes|string|max:255',
+            'nationality' => 'required|string|max:255',
+            'birth_date' => 'required|date_format:Y-m-d',
+            'national_number' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'specialization_id' => 'required|exists:specializations,id',
         ]);
         
-        $team = VolunteerTeam::create([
-            'full_name' => $request->full_name,
-            'team_name' => $request->team_name,
-            'license_number' => $request->license_number,
-            'phone' => $request->phone,
-            'bank_account_number' => $request->bank_account_number,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+    
+        // رفع الصورة إذا كانت موجودة
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('uploads/volunteers'), $imageName);
+    
+            $volunteer->image = 'uploads/volunteers/' . $imageName;
+        }
+    
+        if ($request->has('password')) {
+            $volunteer->password = Hash::make($request->password);
+        }
+    
+        $volunteer->fill($request->except(['password', 'email', 'image']));
         
-        $token = $team->createToken('auth_token')->plainTextToken;
-
+        if ($request->has('email')) {
+            $volunteer->email = $request->email;
+        }
+    
+        $volunteer->save();
+    
         return response()->json([
-            'message' => 'Team registered successfully',
-            'team' => $team,
-            'token' => $token,
-        ], 201);
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => $volunteer
+        ]);
     }
+    
+
+
+
+
+
+    /// teams
+    public function teamRegister(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'full_name' => 'required|string|max:255',
+            'national_number' => 'required|string|unique:volunteer_teams',
+            'phone' => 'required|string|max:255|unique:volunteer_teams',
+            'gender' => 'required|in:ذكر,أنثى',
+            'nationality' => 'required|string',
+            'birth_date' => 'required|date_format:Y-m-d',
+            'image' => 'required|image',
+            'email' => 'required|email|unique:volunteer_teams',
+            'password' => 'required|string|min:8',
+    
+            'team_name' => 'required|string|max:255',
+            'bank_account_number' => 'required|string|unique:business_informations',
+            'log_image' => 'required|image',
+            'logo' => 'required|image',
+            'license_number' => 'required|string',
+            'address' => 'nullable|string',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+    
+        DB::beginTransaction();
+    
+        try {
+            $imagePath = $request->file('image')->move(public_path('uploads/volunteers'), uniqid() . '.' . $request->file('image')->getClientOriginalExtension());
+            $logoPath = $request->file('logo')->move(public_path('uploads/logos'), uniqid() . '.' . $request->file('logo')->getClientOriginalExtension());
+            $logImagePath = $request->file('log_image')->move(public_path('uploads/log'), uniqid() . '.' . $request->file('log_image')->getClientOriginalExtension());
+    
+            $imageRelativePath = 'uploads/volunteers/' . basename($imagePath);
+            $logoRelativePath = 'uploads/logos/' . basename($logoPath);
+            $logImageRelativePath = 'uploads/log/' . basename($logImagePath);
+    
+            $volunteerTeam = VolunteerTeam::create([
+                'full_name' => $request->full_name,
+                'national_number' => $request->national_number,
+                'phone' => $request->phone,
+                'gender' => $request->gender,
+                'nationality' => $request->nationality,
+                'birth_date' => $request->birth_date,
+                'image' => $imageRelativePath,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+    
+            $businessInfo = BusinessInformation::create([
+                'team_name' => $request->team_name,
+                'bank_account_number' => $request->bank_account_number,
+                'log_image' => $logImageRelativePath,
+                'logo' => $logoRelativePath,
+                'license_number' => $request->license_number,
+                'address' => $request->address,
+                'team_id' => $volunteerTeam->id,
+            ]);
+    
+            DB::commit();
+    
+            return response()->json([
+                'message' => 'Team registered successfully',
+                'team' => $volunteerTeam,
+                'business_info' => $businessInfo,
+            ], 201);
+    
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Registration failed',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
 
     public function teamLogin(Request $request)
     {
@@ -120,23 +249,30 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required',
         ]);
-
+    
         $team = VolunteerTeam::where('email', $request->email)->first();
-
-        if (!$team || !Hash::check($request->password, $team->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+    
+        if (!$team || !$team->status) {
+            return response()->json([
+                'message' => !$team ? 'The provided credentials are incorrect.' : 'عذرًا، حسابك غير مفعل.',
+            ], 403); 
         }
-
+    
+        if (!Hash::check($request->password, $team->password)) {
+            return response()->json([
+                'message' => 'The provided credentials are incorrect.',
+            ], 403);
+        }
+    
         $token = $team->createToken('auth_token')->plainTextToken;
-
+    
         return response()->json([
             'message' => 'Team logged in successfully',
             'team' => $team,
             'token' => $token,
         ]);
     }
+    
 
     public function logout(Request $request)
     {

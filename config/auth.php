@@ -48,6 +48,7 @@ return [
             'driver' => 'sanctum',
             'provider' => 'volunteer_teams',
         ],
+ 
     ],
 
     /*
@@ -80,6 +81,8 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\VolunteerTeam::class,
         ],
+
+   
 
         // 'users' => [
         //     'driver' => 'database',
@@ -125,6 +128,7 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+   
     ],
 
     /*

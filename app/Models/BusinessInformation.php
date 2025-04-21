@@ -10,14 +10,17 @@ class BusinessInformation extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'volunteer_team_id',
-        'team_name',
-        'license_number',
-        'logo_image',
-        'phone_number',
-        'bank_account_number',
-    ];
+    protected $table ="business_informations";
+
+    protected $guarded = []; 
+    // protected $fillable = [
+    //     'volunteer_team_id',
+    //     'team_name',
+    //     'license_number',
+    //     'logo_image',
+    //     'phone_number',
+    //     'bank_account_number',
+    // ];
 
     public function volunteerTeam()
     {
