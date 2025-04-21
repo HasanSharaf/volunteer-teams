@@ -46,8 +46,11 @@ return new class extends Migration
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
             $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
+            $table->text('content');            
+            $table->enum('type', ['complaints', 'suggestion']);
             $table->foreignId('volunteer_id')->constrained('volunteers')->onDelete('cascade');
-            $table->foreignId('campaign_id')->constrained('campaigns')->onDelete('cascade');
+            $table->foreignId('team_id')->nullable()->constrained('volunteer_teams')->onDelete('cascade');
+
             $table->timestamps();
         });
 

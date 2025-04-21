@@ -3,6 +3,11 @@
 namespace app\Http\Resources;
 
 use Illuminate\Http\Request;
+use app\Http\Resources\TeamResource;
+use app\Http\Resources\EmployeeResource;
+use App\Http\Resources\VolunteerResource;
+use App\Http\Resources\CampaignTypeResource;
+use App\Http\Resources\SpecializationResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CampaignResource extends JsonResource
@@ -11,12 +16,12 @@ class CampaignResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name_campaign' => $this->name_campaign,
-            'number_volunteers' => $this->number_volunteers,
+            'campaign_name' => $this->campaign_name,
+            'number_of_volunteer' => $this->number_of_volunteer,
             'cost' => $this->cost,
             'address' => $this->address,
-            'from_time' => $this->from_time,
-            'to_time' => $this->to_time,
+            'from' => $this->from,
+            'to' => $this->to,
             'points' => $this->points,
             'status' => $this->status,
             'specialization' => new SpecializationResource($this->whenLoaded('specialization')),

@@ -27,11 +27,11 @@ class Campaign extends Model
         'employee_id',
     ];
 
-    protected $casts = [
-        'from' => 'datetime',
-        'to' => 'datetime',
-        'cost' => 'decimal:2',
-    ];
+    // protected $casts = [
+    //     'from' => 'datetime',
+    //     'to' => 'datetime',
+    //     'cost' => 'decimal:2',
+    // ];
 
     public function specialization(): BelongsTo
     {

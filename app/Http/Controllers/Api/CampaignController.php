@@ -14,10 +14,22 @@ class CampaignController extends Controller
     public function index()
     {
         $campaigns = Campaign::with(['specialization', 'campaignType', 'team', 'employee'])
-            ->paginate(10);
+            ->get();
 
         return CampaignResource::collection($campaigns);
     }
+
+        public function getcampaignsBySpecialty()
+    {
+        $user = auth()->user(); 
+
+        $campaigns = Campaign::where('specialization_id', $user->specialization_id)
+            ->with(['specialization', 'campaignType', 'team', 'employee'])
+            ->get();
+
+        return CampaignResource::collection($campaigns);
+    }
+
 
     public function store(Request $request)
     {
