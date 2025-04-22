@@ -20,8 +20,8 @@ return new class extends Migration
             $table->dateTime('from');
             $table->dateTime('to');
             $table->integer('points');
-            $table->enum('status', ['pending', 'done'])->default('pending');
-            $table->foreignId('specialization_id')->constrained('specializations')->onDelete('cascade');
+            $table->enum('status', ['pending', 'done', 'rejected'])->default('pending');
+            $table->foreignId('specialization_id')->constrained('specializations')->onDelete('cascade')->nullable();
             $table->foreignId('campaign_type_id')->constrained('campaign_types')->onDelete('cascade');
             $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
@@ -40,65 +40,76 @@ return new class extends Migration
             $table->integer('points');
             $table->foreignId('volunteer_id')->constrained('volunteers')->onDelete('cascade');
             $table->foreignId('campaign_id')->constrained('campaigns')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
+            $table->string('magnitude_change');
+            $table->enum('reason_of_change', ['عذر', 'حضور', 'عدم حضور']);
             $table->timestamps();
         });
 
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
-            $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
-            $table->text('content');            
             $table->enum('type', ['complaints', 'suggestion']);
+            $table->text('content');            
+            $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
             $table->foreignId('volunteer_id')->constrained('volunteers')->onDelete('cascade');
             $table->foreignId('team_id')->nullable()->constrained('volunteer_teams')->onDelete('cascade');
-
             $table->timestamps();
         });
 
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->dateTime('attendance_time');
+            $table->boolean('is_attendance')->default(false);
+            $table->integer('points_earned')->default(0);
+            $table->string('image')->nullable();
             $table->foreignId('volunteer_id')->constrained('volunteers')->onDelete('cascade');
             $table->foreignId('campaign_id')->constrained('campaigns')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->timestamps();
         });
 
         Schema::create('benefactors', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
             $table->string('phone');
-            $table->string('address');
             $table->timestamps();
         });
 
         Schema::create('donor_payments', function (Blueprint $table) {
             $table->id();
-            $table->decimal('amount', 10, 2);
             $table->foreignId('benefactor_id')->constrained('benefactors')->onDelete('cascade');
-            $table->foreignId('campaign_id')->constrained('campaigns')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
+            $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
+            $table->decimal('amount', 10, 2);
+            $table->string('transfer_number')->nullable();
+            $table->enum('type', ['حوالة', 'كاش']);
+            $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
+            $table->date('payment_date');
+            $table->string('image')->nullable();
             $table->timestamps();
         });
 
         Schema::create('financials', function (Blueprint $table) {
             $table->id();
-            $table->decimal('amount', 10, 2);
-            $table->enum('type', ['income', 'expense']);
-            $table->foreignId('campaign_id')->constrained('campaigns')->onDelete('cascade');
+            $table->decimal('total_amount', 10, 2);
+            $table->decimal('payment', 10, 2);
+            $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
             $table->timestamps();
         });
 
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
             $table->text('message');
-            $table->foreignId('sender_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('receiver_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('volunteer_id')->constrained('volunteers')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->timestamps();
         });
 
         Schema::create('contracts', function (Blueprint $table) {
             $table->id();
             $table->text('content');
-            $table->foreignId('volunteer_id')->constrained('volunteers')->onDelete('cascade');
+            $table->string('image')->nullable();
+            $table->string('company_name');
+            $table->date('contract_date');
             $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
             $table->timestamps();
         });

@@ -23,12 +23,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('governments', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->timestamps();
-        });
-
         Schema::create('volunteer_teams', function (Blueprint $table) {
             $table->id();
             $table->string('full_name');
@@ -40,21 +34,20 @@ return new class extends Migration
             $table->string('image');
             $table->string('email')->unique();
             $table->string('password');
-            $table->boolean('status')->nullable()->default(false);
+            $table->enum('status',['pending','accepted','rejected'])->default('pending');
             $table->rememberToken();
             $table->timestamps();
         });
 
         Schema::create('business_informations', function (Blueprint $table) {
             $table->id();
-            $table->string('team_name');
-            $table->string('bank_account_number')->unique();
-            $table->string('logo');
-            $table->string('log_image');
-            $table->string('license_number');
-     
-            $table->string('address')->nullable();
             $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
+            $table->string('team_name');
+            $table->string('license_number');
+            $table->string('address')->nullable();
+            $table->string('bank_account_number')->unique();
+            $table->string('log_image');
+            $table->string('logo');
             $table->timestamps();
         });
 
@@ -63,7 +56,7 @@ return new class extends Migration
             $table->string('full_name');
             $table->string('national_number')->unique()->nullable();
             $table->string('nationality')->nullable();
-            $table->string('phone_number')->nullable();
+            $table->string('phone')->nullable();
             $table->string('email')->unique();
             $table->string('password');
             $table->date('birth_date')->nullable();
@@ -76,12 +69,17 @@ return new class extends Migration
 
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('full_name');
             $table->string('email')->unique();
             $table->string('password');
+            $table->string('national_number')->unique()->nullable();
+            $table->enum('position',['مشرف','موظف مالي']);
             $table->string('phone');
-            $table->string('address');
+            $table->string('address')->nullable();
+            $table->date('date_accession');
+            $table->string('image')->nullable();
             $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
+            $table->foreignId('specialization_id')->nullable()->constrained('specializations')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -95,7 +93,6 @@ return new class extends Migration
         Schema::dropIfExists('volunteers');
         Schema::dropIfExists('business_informations');
         Schema::dropIfExists('volunteer_teams');
-        Schema::dropIfExists('governments');
         Schema::dropIfExists('specializations');
         Schema::dropIfExists('campaign_types');
     }
