@@ -33,11 +33,11 @@ class AuthController extends Controller
                 'full_name' => 'required|string|max:255',
                 // 'national_number' => 'required|string',
                 // 'nationality' => 'required|string|max:255',
-                // 'phone_number' => 'required|string|max:255',
+                // 'phone' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:volunteers',
                 'password' => 'required|string|min:8',
                 // 'birth_date' => 'required|date',
-                // 'specialization_id' => 'required|exists:specializations,id',
+                'specialization_id' => 'required|exists:specializations,id',
               
             ]);
 
@@ -45,11 +45,11 @@ class AuthController extends Controller
                 'full_name' => $request->full_name,
                 // 'national_number' => $request->national_number,
                 // 'nationality' => $request->nationality,
-                // 'phone_number' => $request->phone_number,
+                // 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 // 'birth_date' => $request->birth_date,
-                // 'specialization_id' => $request->specialization_id,
+                'specialization_id' => $request->specialization_id,
                
                 'total_points' => 0,
             ]);
@@ -120,7 +120,7 @@ class AuthController extends Controller
             'full_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:volunteers,email,' . $volunteer->id,
             'password' => 'sometimes|string|min:8',
-            'phone_number' => 'sometimes|string|max:255',
+            'phone' => 'sometimes|string|max:255',
             'nationality' => 'required|string|max:255',
             'birth_date' => 'required|date_format:Y-m-d',
             'national_number' => 'required|string',
@@ -252,7 +252,7 @@ class AuthController extends Controller
     
         $team = VolunteerTeam::where('email', $request->email)->first();
     
-        if (!$team || !$team->status) {
+        if (!$team->status == "accepted" ) {
             return response()->json([
                 'message' => !$team ? 'The provided credentials are incorrect.' : 'عذرًا، حسابك غير مفعل.',
             ], 403); 
