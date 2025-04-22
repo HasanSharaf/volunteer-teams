@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Chat extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'employee_id',
-        'volunteer_id',
-        'text',
+        'message',
+        'employee_id'
     ];
 
     public function employee(): BelongsTo
@@ -21,8 +21,8 @@ class Chat extends Model
         return $this->belongsTo(Employee::class);
     }
 
-    public function volunteer(): BelongsTo
+    public function volunteers(): BelongsToMany
     {
-        return $this->belongsTo(Volunteer::class);
+        return $this->belongsToMany(Volunteer::class, 'chat_volunteers');
     }
 } 

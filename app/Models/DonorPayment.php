@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Campaign;
 use App\Models\Benefactor;
 use App\Models\Employee;
+use App\Models\VolunteerTeam;
 
 class DonorPayment extends Model
 {
@@ -15,14 +16,14 @@ class DonorPayment extends Model
 
     protected $fillable = [
         'benefactor_id',
-        'campaign_id',
         'employee_id',
+        'team_id',
         'amount',
-        'date_of_payment',
+        'transfer_number',
         'type',
-        'process_number',
         'status',
-        'image',
+        'payment_date',
+        'image'
     ];
 
     public function benefactor(): BelongsTo
@@ -30,13 +31,13 @@ class DonorPayment extends Model
         return $this->belongsTo(Benefactor::class);
     }
 
-    public function campaign(): BelongsTo
-    {
-        return $this->belongsTo(Campaign::class);
-    }
-
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(VolunteerTeam::class);
     }
 } 

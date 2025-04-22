@@ -4,21 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Contract extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'date',
-        'contract',
+        'content',
         'image',
         'company_name',
-        'team_id',
+        'contract_date',
+        'team_id'
     ];
 
-    public function team()
+    public function team(): BelongsTo
     {
-        return $this->belongsTo(VolunteerTeam::class, 'team_id');
+        return $this->belongsTo(VolunteerTeam::class);
     }
 } 

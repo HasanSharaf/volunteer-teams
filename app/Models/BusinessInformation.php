@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Models;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,19 +10,17 @@ class BusinessInformation extends Model
 {
     use HasFactory;
 
-    protected $table ="business_informations";
+    protected $fillable = [
+        'team_id',
+        'team_name',
+        'license_number',
+        'address',
+        'bank_account_number',
+        'log_image',
+        'logo'
+    ];
 
-    protected $guarded = []; 
-    // protected $fillable = [
-    //     'volunteer_team_id',
-    //     'team_name',
-    //     'license_number',
-    //     'logo_image',
-    //     'phone',
-    //     'bank_account_number',
-    // ];
-
-    public function volunteerTeam()
+    public function team(): BelongsTo
     {
         return $this->belongsTo(VolunteerTeam::class);
     }

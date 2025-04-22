@@ -3,68 +3,59 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class VolunteerTeam extends Authenticatable
+class VolunteerTeam extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory;
 
-    protected $guarded = []; 
-
-
-    protected $hidden = [
+    protected $fillable = [
+        'full_name',
+        'national_number',
+        'phone',
+        'gender',
+        'nationality',
+        'birth_date',
+        'image',
+        'email',
         'password',
-        'remember_token',
+        'status'
     ];
-
 
     public function businessInformation(): HasOne
     {
-        return $this->hasOne(BusinessInformation::class, 'team_id');
-    }
-
-    public function employees(): HasMany
-    {
-        return $this->hasMany(Employee::class, 'team_id');
-    }
-
-    public function volunteers(): HasMany
-    {
-        return $this->hasMany(Volunteer::class, 'team_id');
-    }
-
-    public function campaigns(): HasMany
-    {
-        return $this->hasMany(Campaign::class, 'team_id');
-    }
-
-    public function requests(): HasMany
-    {
-        return $this->hasMany(Request::class, 'team_id');
-    }
-
-    public function donorPayments(): HasMany
-    {
-        return $this->hasMany(DonorPayment::class, 'team_id');
+        return $this->hasOne(BusinessInformation::class);
     }
 
     public function financial(): HasOne
     {
-        return $this->hasOne(Financial::class, 'team_id');
+        return $this->hasOne(Financial::class);
+    }
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
+    public function requests(): HasMany
+    {
+        return $this->hasMany(Request::class);
+    }
+
+    public function donorPayments(): HasMany
+    {
+        return $this->hasMany(DonorPayment::class);
     }
 
     public function contracts(): HasMany
     {
-        return $this->hasMany(Contract::class, 'team_id');
-    }
-
-    public function financials(): HasMany
-    {
-        return $this->hasMany(Financial::class, 'team_id');
+        return $this->hasMany(Contract::class);
     }
 } 

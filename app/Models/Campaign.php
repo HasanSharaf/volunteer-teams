@@ -24,15 +24,7 @@ class Campaign extends Model
         'specialization_id',
         'campaign_type_id',
         'team_id',
-        'employee_id',
-        'name',
-        'description',
-        'start_date',
-        'end_date',
-        'location',
-        'target_amount',
-        'current_amount',
-        'image',
+        'employee_id'
     ];
 
     // protected $casts = [
@@ -41,19 +33,19 @@ class Campaign extends Model
     //     'cost' => 'decimal:2',
     // ];
 
+    public function campaignType(): BelongsTo
+    {
+        return $this->belongsTo(CampaignType::class);
+    }
+
     public function specialization(): BelongsTo
     {
         return $this->belongsTo(Specialization::class);
     }
 
-    public function campaignType(): BelongsTo
-    {
-        return $this->belongsTo(CampaignType::class, 'campaign_type_id');
-    }
-
     public function team(): BelongsTo
     {
-        return $this->belongsTo(VolunteerTeam::class, 'team_id');
+        return $this->belongsTo(VolunteerTeam::class);
     }
 
     public function employee(): BelongsTo
@@ -61,9 +53,14 @@ class Campaign extends Model
         return $this->belongsTo(Employee::class);
     }
 
-    public function volunteers(): BelongsToMany
+    public function attendances(): HasMany
     {
-        return $this->belongsToMany(Volunteer::class, 'campaign_volunteers');
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function campaignVolunteers(): HasMany
+    {
+        return $this->hasMany(CampaignVolunteer::class);
     }
 
     public function points(): HasMany
@@ -71,9 +68,9 @@ class Campaign extends Model
         return $this->hasMany(Point::class);
     }
 
-    public function attendances(): HasMany
+    public function volunteers(): BelongsToMany
     {
-        return $this->hasMany(Attendance::class);
+        return $this->belongsToMany(Volunteer::class, 'campaign_volunteers');
     }
 
     public function requests(): HasMany
