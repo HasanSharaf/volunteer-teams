@@ -3,6 +3,9 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
+use app\Http\Resources\TeamResource;
+use app\Http\Resources\EmployeeResource;
+use App\Http\Resources\BenefactorResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class DonorPaymentResource extends JsonResource

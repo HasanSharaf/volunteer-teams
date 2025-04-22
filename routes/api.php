@@ -63,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Campaigns routes
     Route::apiResource('campaigns', CampaignController::class);
+    Route::get('get/campaigns/By/Specialty', [CampaignController::class,'getcampaignsBySpecialty']);
     Route::post('campaigns/{campaign}/volunteers', [CampaignController::class, 'addVolunteer']);
     Route::delete('campaigns/{campaign}/volunteers/{volunteer}', [CampaignController::class, 'removeVolunteer']);
 
