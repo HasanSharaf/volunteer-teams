@@ -1,10 +1,13 @@
 <?php
 
-namespace app\Models;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Campaign;
+use App\Models\Benefactor;
+use App\Models\Employee;
 
 class DonorPayment extends Model
 {
@@ -12,7 +15,7 @@ class DonorPayment extends Model
 
     protected $fillable = [
         'benefactor_id',
-        'team_id',
+        'campaign_id',
         'employee_id',
         'amount',
         'date_of_payment',
@@ -27,9 +30,9 @@ class DonorPayment extends Model
         return $this->belongsTo(Benefactor::class);
     }
 
-    public function team(): BelongsTo
+    public function campaign(): BelongsTo
     {
-        return $this->belongsTo(VolunteerTeam::class, 'team_id');
+        return $this->belongsTo(Campaign::class);
     }
 
     public function employee(): BelongsTo

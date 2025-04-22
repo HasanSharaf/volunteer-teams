@@ -62,4 +62,9 @@ class VolunteerTeam extends Authenticatable
     {
         return $this->hasMany(Contract::class, 'team_id');
     }
+
+    public function financials(): HasMany
+    {
+        return $this->hasMany(Financial::class, 'team_id');
+    }
 } 

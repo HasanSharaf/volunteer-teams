@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\FinancialController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\OTPController;
+use App\Http\Controllers\Api\GovernmentController;
+use App\Http\Controllers\Api\GovernmentAuthController;
 
 // Public routes
 Route::post('/volunteer/register', [AuthController::class, 'volunteerRegister']);
@@ -90,4 +92,27 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Contracts routes
     Route::apiResource('contracts', ContractController::class);
+});
+
+// Government Routes
+Route::middleware(['auth:sanctum', 'government.only'])->group(function () {
+    Route::get('/government/teams', [GovernmentController::class, 'getTeams']);
+    Route::get('/government/teams/pending', [GovernmentController::class, 'getPendingTeams']);
+    Route::post('/government/teams/{team}/approve', [GovernmentController::class, 'approveTeam']);
+    Route::post('/government/teams/{team}/reject', [GovernmentController::class, 'rejectTeam']);
+    Route::get('/government/teams/{team}', [GovernmentController::class, 'getTeamDetails']);
+    Route::get('/government/teams/{team}/finance', [GovernmentController::class, 'getTeamFinance']);
+    Route::get('/government/teams/{team}/campaigns', [GovernmentController::class, 'getTeamCampaigns']);
+    Route::get('/government/teams/{team}/employees', [GovernmentController::class, 'getTeamEmployees']);
+    Route::post('/government/campaigns/{campaign}/approve', [GovernmentController::class, 'approveCampaign']);
+    Route::post('/government/campaigns/{campaign}/reject', [GovernmentController::class, 'rejectCampaign']);
+});
+
+// Government Authentication Routes
+Route::prefix('government')->group(function () {
+    Route::post('/register', [GovernmentAuthController::class, 'register']);
+    Route::post('/login', [GovernmentAuthController::class, 'login']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [GovernmentAuthController::class, 'logout']);
+    });
 }); 
