@@ -11,12 +11,12 @@ class Point extends Model
     use HasFactory;
 
     protected $fillable = [
+        'points',
         'volunteer_id',
-        'employee_id',
         'campaign_id',
+        'employee_id',
         'magnitude_change',
-        'reason_of_change',
-        'date_of_change',
+        'reason_of_change'
     ];
 
     protected $casts = [
@@ -28,13 +28,13 @@ class Point extends Model
         return $this->belongsTo(Volunteer::class);
     }
 
-    public function employee(): BelongsTo
-    {
-        return $this->belongsTo(Employee::class);
-    }
-
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 } 

@@ -15,13 +15,16 @@ class Employee extends Authenticatable
 
     protected $fillable = [
         'full_name',
-        'phone',
-        'national_id',
+        'email',
+        'password',
+        'national_number',
         'position',
-        'date_of_access',
+        'phone',
+        'address',
+        'date_accession',
         'image',
         'team_id',
-        'specialization_id',
+        'specialization_id'
     ];
 
     protected $hidden = [
@@ -35,7 +38,7 @@ class Employee extends Authenticatable
 
     public function team(): BelongsTo
     {
-        return $this->belongsTo(VolunteerTeam::class, 'team_id');
+        return $this->belongsTo(VolunteerTeam::class);
     }
 
     public function specialization(): BelongsTo

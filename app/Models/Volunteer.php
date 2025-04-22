@@ -43,10 +43,9 @@ class Volunteer extends Authenticatable
         return $this->belongsTo(Specialization::class);
     }
 
-    public function campaigns(): BelongsToMany
+    public function campaignVolunteers(): HasMany
     {
-        return $this->belongsToMany(Campaign::class, 'campaign_volunteers')
-            ->withTimestamps();
+        return $this->hasMany(CampaignVolunteer::class);
     }
 
     public function points(): HasMany
@@ -54,18 +53,23 @@ class Volunteer extends Authenticatable
         return $this->hasMany(Point::class);
     }
 
-    public function attendances(): HasMany
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
     public function requests(): HasMany
     {
         return $this->hasMany(Request::class);
     }
 
-    public function chats(): HasMany
+    public function attendances(): HasMany
     {
-        return $this->hasMany(Chat::class);
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function chats(): BelongsToMany
+    {
+        return $this->belongsToMany(Chat::class, 'chat_volunteers');
+    }
+
+    public function campaigns(): BelongsToMany
+    {
+        return $this->belongsToMany(Campaign::class, 'campaign_volunteers');
     }
 } 
