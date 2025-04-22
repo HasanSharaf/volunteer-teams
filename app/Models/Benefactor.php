@@ -12,7 +12,7 @@ class Benefactor extends Model
 
     protected $fillable = [
         'full_name',
-        'phone_number',
+        'phone',
     ];
 
     public function donorPayments(): HasMany
