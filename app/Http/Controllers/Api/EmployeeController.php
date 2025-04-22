@@ -24,7 +24,7 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'full_name' => 'required|string|max:255',
-            'phone_number' => 'required|string',
+            'phone' => 'required|string',
             'national_id' => 'required|string|unique:employees',
             'position' => 'required|string',
             'date_of_access' => 'required|date',
@@ -45,7 +45,7 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'full_name' => 'sometimes|string|max:255',
-            'phone_number' => 'sometimes|string',
+            'phone' => 'sometimes|string',
             'national_id' => 'sometimes|string|unique:employees,national_id,' . $employee->id,
             'position' => 'sometimes|string',
             'date_of_access' => 'sometimes|date',

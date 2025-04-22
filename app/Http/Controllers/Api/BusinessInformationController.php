@@ -20,7 +20,7 @@ class BusinessInformationController extends Controller
             'volunteer_team_id' => 'required|exists:volunteer_teams,id',
             'team_name' => 'required|string|max:255',
             'license_number' => 'required|string|unique:business_informations',
-            'phone_number' => 'required|string',
+            'phone' => 'required|string',
             'bank_account_number' => 'required|string',
         ]);
 
@@ -38,7 +38,7 @@ class BusinessInformationController extends Controller
         $request->validate([
             'team_name' => 'sometimes|string|max:255',
             'license_number' => 'sometimes|string|unique:business_informations,license_number,' . $businessInfo->id,
-            'phone_number' => 'sometimes|string',
+            'phone' => 'sometimes|string',
             'bank_account_number' => 'sometimes|string',
         ]);
 

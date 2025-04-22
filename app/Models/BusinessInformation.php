@@ -18,7 +18,7 @@ class BusinessInformation extends Model
     //     'team_name',
     //     'license_number',
     //     'logo_image',
-    //     'phone_number',
+    //     'phone',
     //     'bank_account_number',
     // ];
 

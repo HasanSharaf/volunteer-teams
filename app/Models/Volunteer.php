@@ -21,7 +21,7 @@ class Volunteer extends Authenticatable
         'full_name',
         'national_number',
         'nationality',
-        'phone_number',
+        'phone',
         'email',
         'password',
         'image',
