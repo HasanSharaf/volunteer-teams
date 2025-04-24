@@ -17,7 +17,7 @@ class DonorPaymentResource extends JsonResource
             'amount' => $this->amount,
             'payment_date' => $this->payment_date,
             'type' => $this->type,
-            'process_number' => $this->process_number,
+            'transfer_number' => $this->transfer_number,
             'status' => $this->status,
             'image' => $this->image,
             'benefactor' => new BenefactorResource($this->whenLoaded('benefactor')),

@@ -20,8 +20,9 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([
-            GovernmentsSeed::class,
             SpecializationSeeder::class,
+
+            GovernmentsSeed::class,
         ]);
     }
 }

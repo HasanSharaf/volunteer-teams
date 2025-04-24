@@ -31,12 +31,9 @@ class AuthController extends Controller
         try {
             $request->validate([
                 'full_name' => 'required|string|max:255',
-                // 'national_number' => 'required|string',
-                // 'nationality' => 'required|string|max:255',
-                // 'phone' => 'required|string|max:255',
+              
                 'email' => 'required|string|email|max:255|unique:volunteers',
                 'password' => 'required|string|min:8',
-                // 'birth_date' => 'required|date',
                 'specialization_id' => 'required|exists:specializations,id',
               
             ]);
@@ -80,37 +77,37 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required',
         ]);
-
+    
         $volunteer = Volunteer::where('email', $request->email)->first();
-
-        
-        if (!Hash::check($request->password, $volunteer->password)) {
+    
+        if (!$volunteer || !Hash::check($request->password, $volunteer->password)) {
             return response()->json([
                 'message' => 'The provided credentials are incorrect.',
             ], 403);
         }
-
     
-
         $token = $volunteer->createToken('auth_token')->plainTextToken;
-
+    
         return response()->json([
             'message' => 'Volunteer logged in successfully',
             'volunteer' => $volunteer,
             'token' => $token,
         ]);
     }
+    
 
     public function profileVolunteer(Request $request)
     {
         $volunteer = $request->user(); 
-        
+        $volunteer->load('specialization');
+    
         return response()->json([
             'success' => true,
             'message' => 'Volunteer profile retrieved successfully',
-            'data' => $volunteer->with(['specialization'])->first(),
+            'data' => $volunteer,
         ]);
     }
+    
 
     public function updateProfilevolunteer(Request $request)
     {
@@ -124,7 +121,7 @@ class AuthController extends Controller
             'nationality' => 'required|string|max:255',
             'birth_date' => 'required|date_format:Y-m-d',
             'national_number' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'specialization_id' => 'required|exists:specializations,id',
         ]);
         
@@ -252,7 +249,7 @@ class AuthController extends Controller
     
         $team = VolunteerTeam::where('email', $request->email)->first();
     
-        if (!$team->status == "accepted" ) {
+        if ($team->status == "rejected" || $team->status ==  "pending" ) {
             return response()->json([
                 'message' => !$team ? 'The provided credentials are incorrect.' : 'عذرًا، حسابك غير مفعل.',
             ], 403); 
