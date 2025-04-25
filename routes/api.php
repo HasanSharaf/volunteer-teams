@@ -92,6 +92,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Contracts routes
     Route::apiResource('contracts', ContractController::class);
+
+
+    Route::get('/get/all/volunteer/teams', [DonorPaymentController::class, 'getallteamaccepted']);
 });
 
 // Government Routes

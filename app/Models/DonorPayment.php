@@ -14,17 +14,13 @@ class DonorPayment extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'benefactor_id',
-        'employee_id',
-        'team_id',
-        'amount',
-        'transfer_number',
-        'type',
-        'status',
-        'payment_date',
-        'image'
-    ];
+    protected $guarded = []; 
+
+
+    public function volunter(): BelongsTo
+    {
+        return $this->belongsTo(Volunteer::class);
+    }
 
     public function benefactor(): BelongsTo
     {
