@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Models;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,16 +13,16 @@ class Financial extends Model
     protected $fillable = [
         'total_amount',
         'payment',
-        'team_id',
+        'team_id'
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
-        'payment' => 'decimal:2',
+        'payment' => 'decimal:2'
     ];
 
     public function team(): BelongsTo
     {
-        return $this->belongsTo(VolunteerTeam::class, 'team_id');
+        return $this->belongsTo(VolunteerTeam::class);
     }
 } 

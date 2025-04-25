@@ -11,8 +11,8 @@ class Benefactor extends Model
     use HasFactory;
 
     protected $fillable = [
-        'full_name',
-        'phone',
+        'name',
+        'phone'
     ];
 
     public function donorPayments(): HasMany

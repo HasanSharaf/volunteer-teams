@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Models;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,18 +12,12 @@ class Attendance extends Model
     use HasFactory;
 
     protected $fillable = [
-        'attendable_type',
-        'attendable_id',
+        'is_attendance',
+        'points_earned',
+        'image',
+        'volunteer_id',
         'campaign_id',
-        'check_in',
-        'check_out',
-        'status',
-        'notes',
-        'verified_by',
-        'verified_at',
-        'location',
-        'device_info',
-        'metadata'
+        'employee_id'
     ];
 
     // Relationships
@@ -32,16 +26,25 @@ class Attendance extends Model
         return $this->morphTo();
     }
 
+    public function volunteer(): BelongsTo
+    {
+        return $this->belongsTo(Volunteer::class);
+    }
+
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'verified_by');
     }
-
 }
 
    
