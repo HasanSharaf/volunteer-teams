@@ -210,6 +210,7 @@ class AuthController extends Controller
                 'image' => $imageRelativePath,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'status' =>'pending',
             ]);
     
             $businessInfo = BusinessInformation::create([
@@ -249,9 +250,15 @@ class AuthController extends Controller
     
         $team = VolunteerTeam::where('email', $request->email)->first();
     
-        if ($team->status == "rejected" || $team->status ==  "pending" ) {
+        if (!$team) {
             return response()->json([
-                'message' => !$team ? 'The provided credentials are incorrect.' : 'عذرًا، حسابك غير مفعل.',
+                'message' => 'The provided credentials are incorrect.',
+            ], 403);
+        }
+    
+        if ($team->status == "rejected" || $team->status ==  "pending") {
+            return response()->json([
+                'message' => 'عذرًا، حسابك غير مفعل.',
             ], 403); 
         }
     
@@ -269,6 +276,7 @@ class AuthController extends Controller
             'token' => $token,
         ]);
     }
+    
     
 
     public function logout(Request $request)

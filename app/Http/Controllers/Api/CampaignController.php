@@ -14,7 +14,7 @@ class CampaignController extends Controller
     public function index()
     {
         $campaigns = Campaign::with(['specialization', 'campaignType', 'team', 'employee'])
-            ->get();
+            ->where('status','pending')->get();
 
         return CampaignResource::collection($campaigns);
     }
@@ -53,10 +53,16 @@ class CampaignController extends Controller
         return new CampaignResource($campaign);
     }
 
-    public function show(Campaign $campaign)
+    public function show($id)
     {
-        $campaign->load(['specialization', 'campaignType', 'team', 'employee', 'volunteers']);
-        
+        $campaign = Campaign::with(['specialization', 'campaignType', 'team', 'employee'])->find($id);
+    
+        if (!$campaign) {
+            return response()->json([
+                'message' => 'Campaign not found'
+            ], 404);
+        }
+    
         return new CampaignResource($campaign);
     }
 

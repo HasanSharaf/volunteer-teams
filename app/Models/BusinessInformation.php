@@ -10,6 +10,8 @@ class BusinessInformation extends Model
 {
     use HasFactory;
 
+    protected $table = 'business_informations';
+
     protected $fillable = [
         'team_id',
         'team_name',
@@ -22,6 +24,6 @@ class BusinessInformation extends Model
 
     public function team(): BelongsTo
     {
-        return $this->belongsTo(VolunteerTeam::class);
+        return $this->belongsTo(VolunteerTeam::class ,'team_id');
     }
 } 
