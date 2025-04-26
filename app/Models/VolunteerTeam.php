@@ -26,7 +26,7 @@ class VolunteerTeam extends Model
 
     public function businessInformation(): HasOne
     {
-        return $this->hasOne(BusinessInformation::class);
+        return $this->hasOne(BusinessInformation::class,'team_id');
     }
 
     public function financial(): HasOne

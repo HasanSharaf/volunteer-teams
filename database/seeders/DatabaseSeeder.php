@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             SpecializationSeeder::class,
-
+            CampaignTypesSeeder::class,
             GovernmentsSeed::class,
         ]);
     }
