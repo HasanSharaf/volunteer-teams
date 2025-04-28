@@ -10,11 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class CampaignTypeController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-        $this->middleware('team.only');
-    }
+ 
 
     public function index()
     {

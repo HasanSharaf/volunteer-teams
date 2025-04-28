@@ -2,43 +2,124 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Models\Campaign;
 use App\Models\Employee;
-use App\Http\Resources\EmployeeResource;
-use App\Http\Resources\CampaignResource;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\PointResource;
+use App\Http\Resources\CampaignResource;
+use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\AttendanceResource;
 use App\Http\Resources\DonorPaymentResource;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class EmployeeController extends Controller
 {
+ 
+    public function profileEmployee(Request $request)
+    {
+        $Employee = $request->user(); 
+        $Employee->load('specialization');
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Employee profile retrieved successfully',
+            'data' => $Employee,
+        ]);
+    }
+
     public function index()
     {
         $employees = Employee::all();
         return response()->json($employees);
     }
 
+
     public function store(Request $request)
     {
         $request->validate([
-            'full_name' => 'required|string|max:255',
+            'full_name' => 'required|string',
+            'email' => 'required|email|unique:employees',
+            'password' => 'required|min:6',
+            'national_number' => 'nullable|unique:employees',
+            'position' => 'required|in:مشرف,موظف مالي',
             'phone' => 'required|string',
-            'national_id' => 'required|string|unique:employees',
-            'position' => 'required|string',
-            'date_of_access' => 'required|date',
+            'address' => 'nullable|string',
+            'date_accession' => 'required|date',
+            'image' => 'nullable|string',
             'team_id' => 'required|exists:volunteer_teams,id',
-            'specialization_id' => 'required|exists:specializations,id',
+            'specialization_id' => 'nullable|exists:specializations,id',
         ]);
 
-        $employee = Employee::create($request->all());
-        return response()->json($employee, 201);
-    }
+        $employee = Employee::create([
+            'full_name' => $request->full_name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'national_number' => $request->national_number,
+            'position' => $request->position,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'date_accession' => $request->date_accession,
+            'image' => $request->image,
+            'team_id' => $request->team_id,
+            'specialization_id' => $request->specialization_id,
+        ]);
 
+        return response()->json(['employee' => $employee], 201);
+    }
+    
     public function show(Employee $employee)
     {
         return response()->json($employee);
+    }
+
+    public function updateEmployee(Request $request)
+    {
+        $employee = auth()->user(); // الموظف الحالي
+
+        $request->validate([
+            'full_name' => 'nullable|string',
+            'email' => 'nullable|email|unique:employees,email,' . $employee->id,
+            'password' => 'nullable|min:6',
+            'national_number' => 'nullable|unique:employees,national_number,' . $employee->id,
+            'position' => 'nullable|in:مشرف,موظف مالي',
+            'phone' => 'sometimes|nullable|string',
+            'address' => 'nullable|string',
+            'date_accession' => 'nullable|date_format:Y-m-d',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'team_id' => 'nullable|exists:volunteer_teams,id',
+            'specialization_id' => 'nullable|exists:specializations,id',
+        ]);
+
+        if ($request->hasFile('image')) {
+            // حذف الصورة القديمة لو تريد (اختياري)
+            if ($employee->image && file_exists(public_path($employee->image))) {
+                unlink(public_path($employee->image));
+            }
+
+            $image = $request->file('image');
+            $imageName = uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('uploads/employee'), $imageName);
+            $employee->image = 'uploads/employee/' . $imageName;
+        }
+
+        // تحديث الحقول
+        $employee->full_name = $request->input('full_name', $employee->full_name);
+        $employee->email = $request->input('email', $employee->email);
+        if ($request->filled('password')) {
+            $employee->password = Hash::make($request->password);
+        }
+        $employee->national_number = $request->input('national_number', $employee->national_number);
+        $employee->position = $request->input('position', $employee->position);
+        $employee->phone = $request->input('phone', $employee->phone);
+        $employee->address = $request->input('address', $employee->address);
+        $employee->date_accession = $request->input('date_accession', $employee->date_accession);
+        $employee->team_id = $request->input('team_id', $employee->team_id);
+        $employee->specialization_id = $request->input('specialization_id', $employee->specialization_id);
+
+        $employee->save();
+
+        return response()->json(['employee' => $employee], 200);
     }
 
     public function update(Request $request, Employee $employee)
@@ -82,4 +163,14 @@ class EmployeeController extends Controller
     {
         return DonorPaymentResource::collection($employee->donorPayments()->paginate(10));
     }
+
+    public function getEmployeeCampaigns()
+    {
+        $employee = auth()->user(); 
+        $campaigns = $employee->team->campaigns;
+        $campaigns = Campaign::with(['specialization', 'campaignType', 'team', 'employee', 'volunteers'])->get();
+        return CampaignResource::collection($campaigns);
+        
+    }
+
 } 

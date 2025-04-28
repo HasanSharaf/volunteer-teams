@@ -48,14 +48,32 @@ class OTPController extends Controller
                 'expires_at' => $expiresAt,
             ]);
     
-            Mail::to($request->email)->send(new SendOtpMail($otp));
-    
+            // إعدادات الإيميل اليدوية
+            $to = $request->email;
+            $subject = 'Your OTP Code';
+            $message = "Your OTP code is: $otp\n\nIt will expire in 5 minutes.";
+            $headers = "From: info@smart-battery.com\r\n";
+            $headers .= "Reply-To: info@smart-battery.com\r\n";
+            $headers .= "X-Mailer: PHP/" . phpversion();
+            
+            
+            $sendResult = mail($to, $subject, $message, $headers);
+            
+            \Log::info('Trying to send mail', [
+                'to' => $to,
+                'subject' => $subject,
+                'result' => $sendResult ? 'Success' : 'Fail'
+            ]);
+            
+            if (!$sendResult) {
+                throw new \Exception("Failed to send email.");
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'OTP sent successfully',
                 'expires_at' => $expiresAt,
                 'otp' => $otp,
-                
             ]);
     
         } catch (\Exception $e) {
@@ -66,6 +84,9 @@ class OTPController extends Controller
             ], 500);
         }
     }
+    
+
+
     
 
     public function verifyOTP(Request $request)
@@ -151,6 +172,5 @@ class OTPController extends Controller
             ], 500);
         }
     }
-    
 
 } 

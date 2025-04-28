@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\VolunteerTeam;
-use App\Models\Volunteer;
 use App\Models\Employee;
-use App\Models\BusinessInformation;
 use App\Models\Financial;
+use App\Models\Volunteer;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Models\VolunteerTeam;
+use App\Models\BusinessInformation;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
@@ -185,4 +186,74 @@ class VolunteerTeamController extends Controller
         $requests = $team->requests()->with('volunteer')->get();
         return response()->json($requests);
     }
+
+
+    public function storeEmployee(Request $request)
+    {
+        $request->validate([
+            'full_name' => 'required|string',
+            'email' => 'required|email|unique:employees',
+            'password' => 'required|min:6',
+            'national_number' => 'nullable|unique:employees',
+            'position' => 'required|in:مشرف,موظف مالي',
+            'phone' => 'required|string',
+            'address' => 'nullable|string',
+            'date_accession' => 'required|date_format:Y-m-d',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', 
+            'team_id' => 'exists:volunteer_teams,id',
+            'specialization_id' => 'nullable|exists:specializations,id',
+        ]);
+    
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->move(public_path('uploads/employee'), uniqid() . '.' . $request->file('image')->getClientOriginalExtension());
+            $imageRelativePath = 'uploads/employee/' . basename($imagePath);
+
+         
+        }
+    
+        $employee = Employee::create([
+            'full_name' => $request->full_name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'national_number' => $request->national_number,
+            'position' => $request->position,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'date_accession' => $request->date_accession,
+            'image' => $imageRelativePath, 
+            'team_id' => auth()->user()->id,
+            'specialization_id' => $request->specialization_id,
+        ]);
+    
+        return response()->json(['employee' => $employee], 201);
+    }
+
+    public function LoginEmployee(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+    
+        $employee = Employee::where('email', $request->email)->first();
+    
+        if (!$employee || !Hash::check($request->password, $employee->password)) {
+            return response()->json([
+                'message' => 'The provided credentials are incorrect.',
+            ], 403);
+        }
+    
+
+
+        $token = $employee->createToken('auth_token')->plainTextToken;
+    
+        return response()->json([
+            'message' => 'employee logged in successfully',
+            'Employee' => $employee,
+            'token' => $token,
+        ]);
+    }
+
+
 } 

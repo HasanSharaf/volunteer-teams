@@ -287,4 +287,21 @@ class AuthController extends Controller
             'message' => 'Successfully logged out',
         ]);
     }
+
+
+
+ 
+
+    // تسجيل الدخول
+    public function loginemployee(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (!Auth::guard('employee')->attempt($credentials)) {
+            return response()->json(['message' => 'بيانات الدخول غير صحيحة'], 401);
+        }
+
+        $employee = Auth::guard('employee')->user();
+        return response()->json(['employee' => $employee], 200);
+    }
 } 

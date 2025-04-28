@@ -1,10 +1,10 @@
 <?php
 
-namespace app\Http\Resources;
+namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
-use app\Http\Resources\TeamResource;
-use app\Http\Resources\EmployeeResource;
+use App\Http\Resources\TeamResource;
+use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\VolunteerResource;
 use App\Http\Resources\CampaignTypeResource;
 use App\Http\Resources\SpecializationResource;
