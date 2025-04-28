@@ -37,9 +37,6 @@ Route::post('employee/login', [VolunteerTeamController::class, 'LoginEmployee'])
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-
-
-    
     //volunteer
     Route::get('/volunteer/profile', [AuthController::class, 'profileVolunteer']);
     Route::post('/volunteer/profile/update', [AuthController::class, 'updateProfilevolunteer']);
@@ -97,16 +94,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/get/all/volunteer/teams', [DonorPaymentController::class, 'getallteamaccepted']);
 
-    Route::post('store/Employee',[VolunteerTeamController::class,'storeEmployee']);
-    Route::get('Employee/profile',[EmployeeController::class,'profileEmployee']);
-    Route::put('Employee/update',[EmployeeController::class,'updateEmployee']);
-    Route::get('get/Campaigns/by/tema',[EmployeeController::class,'getEmployeeCampaigns']);
-    Route::post('/campaigns/create', [CampaignController::class, 'storeCampaign']);
-
-
-    
-    
-    
+    Route::post('store/employee',[VolunteerTeamController::class,'storeEmployee']);
+    Route::get('employee/profile',[EmployeeController::class,'profileEmployee']);
+    Route::put('employee/update',[EmployeeController::class,'updateEmployee']);
+    Route::get('get-employee-campaigns',[EmployeeController::class,'getEmployeeCampaigns']);
+    Route::post('campaigns/create', [CampaignController::class, 'storeCampaign']);
 });
 
 // Government Routes
@@ -116,11 +108,11 @@ Route::middleware(['auth:sanctum', 'government.only'])->group(function () {
     Route::post('/government/teams/{team}/approve', [GovernmentController::class, 'approveTeam']);
     Route::post('/government/teams/{team}/reject', [GovernmentController::class, 'rejectTeam']);
     Route::get('/government/teams/{team}', [GovernmentController::class, 'getTeamDetails']);
-    Route::get('/government/teams/{team}/finance', [GovernmentController::class, 'getTeamFinance']);
+    Route::get('/government/teams/{team}/total-finance', [GovernmentController::class, 'getListTeamFinance']);
+    Route::get('/government/teams/{team}/list-finance', [GovernmentController::class, 'getTotalTeamFinance']);
     Route::get('/government/teams/{team}/campaigns', [GovernmentController::class, 'getTeamCampaigns']);
     Route::get('/government/teams/{team}/employees', [GovernmentController::class, 'getTeamEmployees']);
-    Route::post('/government/campaigns/{campaign}/approve', [GovernmentController::class, 'approveCampaign']);
-    Route::post('/government/campaigns/{campaign}/reject', [GovernmentController::class, 'rejectCampaign']);
+    Route::get('/government/volunteers', [GovernmentController::class, 'getAllVolunteers']);
 });
 
 // Government Authentication Routes
@@ -130,5 +122,25 @@ Route::prefix('government')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [GovernmentAuthController::class, 'logout']);
     });
-}); 
+});
 
+// Volunteer Team Routes
+Route::middleware(['auth:sanctum', 'team.only'])->group(function () {
+    Route::prefix('teams')->group(function () {
+        // Statistics
+        Route::get('/statistics', [VolunteerTeamController::class, 'getTeamStatistics']);
+        
+        // Campaigns
+        Route::get('/campaigns', [VolunteerTeamController::class, 'getTeamCampaigns']);
+        
+        // Employees
+        Route::get('/employees', [VolunteerTeamController::class, 'getMyEmployees']);
+        
+        // Contracts
+        Route::get('/contracts', [VolunteerTeamController::class, 'getTeamContracts']);
+        Route::post('/contracts', [VolunteerTeamController::class, 'storeContract']);
+        Route::get('/contracts/{contract}', [VolunteerTeamController::class, 'showContract']);
+        Route::put('/contracts/{contract}', [VolunteerTeamController::class, 'updateContract']);
+        Route::delete('/contracts/{contract}', [VolunteerTeamController::class, 'deleteContract']);
+    });
+});
