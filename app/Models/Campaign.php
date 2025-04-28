@@ -27,11 +27,11 @@ class Campaign extends Model
         'employee_id'
     ];
 
-    // protected $casts = [
-    //     'from' => 'datetime',
-    //     'to' => 'datetime',
-    //     'cost' => 'decimal:2',
-    // ];
+    protected $casts = [
+        'from' => 'datetime',
+        'to' => 'datetime',
+        'cost' => 'decimal:2',
+    ];
 
     public function campaignType(): BelongsTo
     {
@@ -76,15 +76,5 @@ class Campaign extends Model
     public function requests(): HasMany
     {
         return $this->hasMany(Request::class);
-    }
-
-    public function donorPayments(): HasMany
-    {
-        return $this->hasMany(DonorPayment::class);
-    }
-
-    public function financials(): HasMany
-    {
-        return $this->hasMany(Financial::class);
     }
 } 

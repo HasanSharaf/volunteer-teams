@@ -18,13 +18,6 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-
-
-    
-    
-
-
-
     //Volunteer
     public function volunteerRegister(Request $request)
     {
@@ -153,11 +146,6 @@ class AuthController extends Controller
             'data' => $volunteer
         ]);
     }
-    
-
-
-
-
 
     /// teams
     public function teamRegister(Request $request)
@@ -250,7 +238,7 @@ class AuthController extends Controller
     
         $team = VolunteerTeam::where('email', $request->email)->first();
     
-        if (!$team) {
+        if (!$team || $team->status !== "accepted") {
             return response()->json([
                 'message' => 'The provided credentials are incorrect.',
             ], 403);
@@ -277,8 +265,6 @@ class AuthController extends Controller
         ]);
     }
     
-    
-
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -287,10 +273,6 @@ class AuthController extends Controller
             'message' => 'Successfully logged out',
         ]);
     }
-
-
-
- 
 
     // تسجيل الدخول
     public function loginemployee(Request $request)

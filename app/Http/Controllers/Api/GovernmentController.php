@@ -119,18 +119,17 @@ class GovernmentController extends Controller
         ]);
     }
 
-    public function getTeamFinance(VolunteerTeam $team)
+    public function getListTeamFinance(VolunteerTeam $team)
     {
-        $payments = DonorPayment::whereHas('campaign', function ($query) use ($team) {
-                $query->where('team_id', $team->id);
-            })
-            ->with(['benefactor', 'campaign'])
+        $payments = DonorPayment::where('team_id', $team->id)
+            ->with('benefactor')
             ->get()
             ->map(function ($payment) {
                 return [
+                    'id' => $payment->id,
                     'name' => $payment->benefactor->name,
-                    'details' => $payment->campaign->campaign_name,
-                    'date' => $payment->created_at,
+                    'details' => $payment->type,
+                    'date' => $payment->payment_date,
                     'cost' => $payment->amount,
                 ];
             });
@@ -141,37 +140,56 @@ class GovernmentController extends Controller
         ]);
     }
 
+    public function getTotalTeamFinance(VolunteerTeam $team)
+    {
+        $finances = Financial::where('team_id', $team->id)
+            ->get()
+            ->map(function ($finance) {
+                return [
+                    'id' => $finance->id,
+                    'total_amount' => $finance->total_amount,
+                    'payment' => $finance->payment,
+                    'date' => $finance->created_at,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $finances
+        ]);
+    }
+
     public function getTeamCampaigns(VolunteerTeam $team)
     {
         $ongoingCampaigns = Campaign::where('team_id', $team->id)
-            ->where('status', 'ongoing')
+            ->where('status', 'pending')
             ->with('campaignType')
             ->get()
             ->map(function ($campaign) {
                 return [
                     'id' => $campaign->id,
-                    'name' => $campaign->name,
-                    'location' => $campaign->location,
-                    'date' => $campaign->start_date,
+                    'name' => $campaign->campaign_name,
+                    'location' => $campaign->address,
+                    'date' => $campaign->from,
                     'category' => $campaign->campaignType->name,
-                    'cost' => $campaign->financials->sum('amount'),
-                    'supplies' => $campaign->description,
+                    'cost' => $campaign->cost,
+                    // 'supplies' => $campaign->description,
                 ];
             });
 
         $completedCampaigns = Campaign::where('team_id', $team->id)
-            ->where('status', 'completed')
+            ->where('status', 'done')
             ->with('campaignType')
             ->get()
             ->map(function ($campaign) {
                 return [
                     'id' => $campaign->id,
-                    'name' => $campaign->name,
-                    'location' => $campaign->location,
-                    'date' => $campaign->start_date,
+                    'name' => $campaign->campaign_name,
+                    'location' => $campaign->address,
+                    'date' => $campaign->from,
                     'category' => $campaign->campaignType->name,
-                    'cost' => $campaign->financials->sum('amount'),
-                    'supplies' => $campaign->description,
+                    'cost' => $campaign->cost,
+                    // 'supplies' => $campaign->description,
                 ];
             });
 
@@ -187,16 +205,18 @@ class GovernmentController extends Controller
     public function getTeamEmployees(VolunteerTeam $team)
     {
         $employees = Employee::where('team_id', $team->id)
+            ->with('specialization')
             ->get()
             ->map(function ($employee) {
                 return [
                     'id' => $employee->id,
-                    'name' => $employee->name,
-                    'email' => $employee->email,
+                    'image' => $employee->image,
+                    'name' => $employee->full_name,
                     'phone' => $employee->phone,
+                    'email' => $employee->email,
+                    'address' => $employee->address,
                     'position' => $employee->position,
-                    'salary' => $employee->salary,
-                    'hire_date' => $employee->hire_date,
+                    'specialization' => $employee->specialization->name,
                 ];
             });
 
@@ -206,23 +226,26 @@ class GovernmentController extends Controller
         ]);
     }
 
-    public function approveCampaign(Campaign $campaign)
+    public function getAllVolunteers()
     {
-        $campaign->update(['status' => 'ongoing']);
+        $volunteers = Volunteer::with(['specialization'])
+            ->get()
+            ->map(function ($volunteer) {
+                return [
+                    'id' => $volunteer->id,
+                    'image' => $volunteer->image,
+                    'name' => $volunteer->full_name,
+                    'phone' => $volunteer->phone,
+                    'email' => $volunteer->email,
+                    'nationality' => $volunteer->nationality,
+                    'specialization' => $volunteer->specialization ? $volunteer->specialization->name : null,
+                    'total_points' => $volunteer->total_points,
+                ];
+            });
 
         return response()->json([
             'success' => true,
-            'message' => 'Campaign approved successfully'
-        ]);
-    }
-
-    public function rejectCampaign(Campaign $campaign)
-    {
-        $campaign->update(['status' => 'rejected']);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Campaign rejected successfully'
+            'data' => $volunteers
         ]);
     }
 } 

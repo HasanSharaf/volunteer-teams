@@ -117,7 +117,18 @@ class EmployeeController extends Controller
         $employee->team_id = $request->input('team_id', $employee->team_id);
         $employee->specialization_id = $request->input('specialization_id', $employee->specialization_id);
 
-        $employee->save();
+        Employee::where('id', $employee->id)->update([
+            'full_name' => $employee->full_name,
+            'email' => $employee->email,
+            'national_number' => $employee->national_number,
+            'position' => $employee->position,
+            'phone' => $employee->phone,
+            'address' => $employee->address,
+            'date_accession' => $employee->date_accession,
+            'image' => $employee->image,
+            'team_id' => $employee->team_id,
+            'specialization_id' => $employee->specialization_id
+        ]);
 
         return response()->json(['employee' => $employee], 200);
     }

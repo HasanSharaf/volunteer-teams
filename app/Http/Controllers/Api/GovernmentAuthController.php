@@ -13,11 +13,13 @@ class GovernmentAuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
+            'name' => 'string',
             'email' => 'required|email|unique:governments',
             'password' => 'required|min:8',
         ]);
 
         $government = Government::create([
+            'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);

@@ -9,10 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-
 class VolunteerTeam extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, HasApiTokens, Notifiable;
 
     protected $fillable = [
         'full_name',
@@ -27,6 +26,11 @@ class VolunteerTeam extends Authenticatable
         'status'
     ];
 
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
     public function businessInformation(): HasOne
     {
         return $this->hasOne(BusinessInformation::class,'team_id');
@@ -34,7 +38,7 @@ class VolunteerTeam extends Authenticatable
 
     public function financial(): HasOne
     {
-        return $this->hasOne(Financial::class);
+        return $this->hasOne(Financial::class, 'team_id');
     }
 
     public function employees(): HasMany
@@ -54,11 +58,11 @@ class VolunteerTeam extends Authenticatable
 
     public function donorPayments(): HasMany
     {
-        return $this->hasMany(DonorPayment::class);
+        return $this->hasMany(DonorPayment::class, 'team_id');
     }
 
     public function contracts(): HasMany
     {
-        return $this->hasMany(Contract::class);
+        return $this->hasMany(Contract::class, 'team_id');
     }
 } 
