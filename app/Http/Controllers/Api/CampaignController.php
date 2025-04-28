@@ -15,7 +15,7 @@ class CampaignController extends Controller
     public function index()
     {
         $campaigns = Campaign::with(['specialization', 'campaignType', 'team', 'employee'])
-            ->get();
+            ->where('status','pending')->get();
 
         return CampaignResource::collection($campaigns);
     }
@@ -67,6 +67,7 @@ class CampaignController extends Controller
     
         return response()->json(['campaign' => $campaign], 201);
     }
+
     public function show($id)
     {
         try {

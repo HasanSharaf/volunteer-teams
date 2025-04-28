@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\OTP;
+use App\Mail\SendOtpMail;
 use Illuminate\Http\Request;
+use App\Models\VolunteerTeam;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Mail;
+
 class OTPController extends Controller
 {
     public function sendOTP(Request $request)
@@ -80,6 +84,7 @@ class OTPController extends Controller
             ], 500);
         }
     }
+    
 
 
     
@@ -167,4 +172,5 @@ class OTPController extends Controller
             ], 500);
         }
     }
+
 } 

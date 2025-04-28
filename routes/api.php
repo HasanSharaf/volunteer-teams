@@ -30,6 +30,7 @@ Route::post('/team/register', [AuthController::class, 'teamRegister']);
 Route::post('/team/login', [AuthController::class, 'teamLogin']);
 Route::post('/send-otp', [OTPController::class, 'sendOTP']);
 Route::post('/verify-otp', [OTPController::class, 'verifyOTP']);
+Route::post('/update/Password', [OTPController::class, 'updatePasswordForVolunteerEntities']);
 
 Route::post('employee/login', [VolunteerTeamController::class, 'LoginEmployee']);
 
