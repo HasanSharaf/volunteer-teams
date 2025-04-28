@@ -1,12 +1,12 @@
 <?php
 
-namespace app\Http\Resources;
+namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
-use app\Http\Resources\TeamResource;
+use App\Http\Resources\TeamResource;
 use App\Http\Resources\PointResource;
-use app\Http\Resources\CampaignResource;
-use app\Http\Resources\AttendanceResource;
+use App\Http\Resources\CampaignResource;
+use App\Http\Resources\AttendanceResource;
 use App\Http\Resources\DonorPaymentResource;
 use App\Http\Resources\SpecializationResource;
 use Illuminate\Http\Resources\Json\JsonResource;

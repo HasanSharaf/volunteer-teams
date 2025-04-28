@@ -21,7 +21,7 @@ return new class extends Migration
             $table->dateTime('to');
             $table->integer('points');
             $table->enum('status', ['pending', 'done', 'rejected'])->default('pending');
-            $table->foreignId('specialization_id')->constrained('specializations')->onDelete('cascade')->nullable();
+            $table->foreignId('specialization_id')->nullable()->constrained('specializations')->onDelete('cascade');
             $table->foreignId('campaign_type_id')->constrained('campaign_types')->onDelete('cascade');
             $table->foreignId('team_id')->constrained('volunteer_teams')->onDelete('cascade');
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');

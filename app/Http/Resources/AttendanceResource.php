@@ -1,8 +1,11 @@
 <?php
 
-namespace app\Http\Resources;
+namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
+use App\Http\Resources\CampaignResource;
+use App\Http\Resources\EmployeeResource;
+use App\Http\Resources\VolunteerResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class AttendanceResource extends JsonResource

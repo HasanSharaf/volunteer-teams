@@ -31,7 +31,7 @@ Route::post('/team/login', [AuthController::class, 'teamLogin']);
 Route::post('/send-otp', [OTPController::class, 'sendOTP']);
 Route::post('/verify-otp', [OTPController::class, 'verifyOTP']);
 
-
+Route::post('employee/login', [VolunteerTeamController::class, 'LoginEmployee']);
 
 
 // Protected routes
@@ -95,6 +95,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::get('/get/all/volunteer/teams', [DonorPaymentController::class, 'getallteamaccepted']);
+
+    Route::post('store/Employee',[VolunteerTeamController::class,'storeEmployee']);
+    Route::get('Employee/profile',[EmployeeController::class,'profileEmployee']);
+    Route::put('Employee/update',[EmployeeController::class,'updateEmployee']);
+    Route::get('get/Campaigns/by/tema',[EmployeeController::class,'getEmployeeCampaigns']);
+    Route::post('/campaigns/create', [CampaignController::class, 'storeCampaign']);
+
+
+    
+    
+    
 });
 
 // Government Routes
@@ -119,3 +130,4 @@ Route::prefix('government')->group(function () {
         Route::post('/logout', [GovernmentAuthController::class, 'logout']);
     });
 }); 
+

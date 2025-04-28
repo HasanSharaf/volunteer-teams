@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class VolunteerTeam extends Model
+class VolunteerTeam extends Authenticatable
 {
-    use HasFactory;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'full_name',
@@ -26,7 +29,7 @@ class VolunteerTeam extends Model
 
     public function businessInformation(): HasOne
     {
-        return $this->hasOne(BusinessInformation::class);
+        return $this->hasOne(BusinessInformation::class,'team_id');
     }
 
     public function financial(): HasOne
@@ -36,17 +39,17 @@ class VolunteerTeam extends Model
 
     public function employees(): HasMany
     {
-        return $this->hasMany(Employee::class);
+        return $this->hasMany(Employee::class,'team_id');
     }
 
     public function campaigns(): HasMany
     {
-        return $this->hasMany(Campaign::class);
+        return $this->hasMany(Campaign::class,'team_id');
     }
 
     public function requests(): HasMany
     {
-        return $this->hasMany(Request::class);
+        return $this->hasMany(Request::class,'team_id');
     }
 
     public function donorPayments(): HasMany

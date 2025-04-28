@@ -32,13 +32,10 @@ class Employee extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'date_accession' => 'date',
-    ];
 
     public function team(): BelongsTo
     {
-        return $this->belongsTo(VolunteerTeam::class);
+        return $this->belongsTo(VolunteerTeam::class,'team_id');
     }
 
     public function specialization(): BelongsTo
