@@ -28,7 +28,7 @@ class RequestController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $validated = $request->validate([
             'content' => 'required|string',
@@ -36,7 +36,13 @@ class RequestController extends Controller
             'team_id' => 'nullable|exists:volunteer_teams,id',
         ]);
     
-        $validated['volunteer_id'] = auth()->id(); // تعيين المستخدم الحالي تلقائيًا
+        // إذا النوع suggestion، يتم تجاهل team_id وتعيينها إلى null
+        if ($validated['type'] === 'suggestion') {
+            $validated['team_id'] = null;
+        }
+    
+        // تعيين المستخدم الحالي تلقائيًا
+        $validated['volunteer_id'] = auth()->id();
     
         $requestModel = VolunteerRequest::create($validated);
     
@@ -45,41 +51,57 @@ class RequestController extends Controller
             'data' => $requestModel
         ]);
     }
+
     
 
     /**
      * Display the specified resource.
      */
-    public function show(VolunteerRequest $volunteerRequest)
+    public function show($id)
     {
-        $volunteerRequest->load(['team', 'volunteer']);
+        $volunteerRequest = VolunteerRequest::with(['team', 'volunteer'])->find($id);
+    
+        if (!$volunteerRequest) {
+            return response()->json([
+                'message' => 'Request not found'
+            ], 404);
+        }
+    
         return response()->json($volunteerRequest);
     }
+
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, $id)
     {
-        $requestModel = VolunteerRequest::find($id);
+        $volunteerRequest = VolunteerRequest::find($id);
     
-        if (!$requestModel) {
-            return response()->json(['message' => 'Request not found'], 404);
+        if (!$volunteerRequest) {
+            return response()->json([
+                'message' => 'Request not found'
+            ], 404);
         }
     
         $validated = $request->validate([
-            'content' => 'sometimes|string',
-            'type' => 'sometimes|in:complaints,suggestion',
+            'content' => 'required|string',
+            'type' => 'required|in:complaints,suggestion',
             'team_id' => 'nullable|exists:volunteer_teams,id',
         ]);
     
-        $requestModel->update($validated);
+        if ($validated['type'] === 'suggestion') {
+            $validated['team_id'] = null;
+        }
+    
+        $volunteerRequest->update($validated);
     
         return response()->json([
             'message' => 'Request updated successfully',
-            'data' => $requestModel
+            'data' => $volunteerRequest
         ]);
     }
+
     
     
 
@@ -97,6 +119,31 @@ class RequestController extends Controller
 
 
 
+
+    public function indexForEmployee()
+    {
+        $employee = auth()->user();
+
+        if (!$employee || !$employee->team_id) {
+            return response()->json([
+                'message' => 'No team assigned to this employee'
+            ], 403);
+        }
+
+        $teamId = $employee->team_id;
+
+        $requests = VolunteerRequest::with('volunteer')->where(function ($query) use ($teamId) {
+            $query->where('type', 'suggestion') 
+                ->orWhere(function ($q) use ($teamId) {
+                    $q->where('type', 'complaints')
+                        ->where('team_id', $teamId);
+                });
+        })->latest()->get();
+
+        return response()->json([
+            'data' => $requests
+        ]);
+    }
 
 
     public function getTeamRequests(VolunteerTeam $team)

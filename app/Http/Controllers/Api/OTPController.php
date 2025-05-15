@@ -52,8 +52,8 @@ class OTPController extends Controller
             $to = $request->email;
             $subject = 'Your OTP Code';
             $message = "Your OTP code is: $otp\n\nIt will expire in 5 minutes.";
-            $headers = "From: info@smart-battery.com\r\n";
-            $headers .= "Reply-To: info@smart-battery.com\r\n";
+            $headers = "From: info@Asar.com\r\n";
+            $headers .= "Reply-To: info@Asar.com\r\n";
             $headers .= "X-Mailer: PHP/" . phpversion();
             
             

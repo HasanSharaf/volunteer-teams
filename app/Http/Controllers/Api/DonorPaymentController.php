@@ -9,7 +9,7 @@ use App\Models\DonorPayment;
 use Illuminate\Http\Request;
 use App\Models\VolunteerTeam;
 use App\Http\Controllers\Controller;
-use app\Http\Resources\TeamResource;
+use App\Http\Resources\TeamResource;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\VolunteerResource;
 use App\Http\Resources\DonorPaymentResource;
@@ -28,7 +28,7 @@ class DonorPaymentController extends Controller
     {
         $volunteer = auth()->user(); // أو auth()->guard('benefactor')->user()
 
-        $payments = DonorPayment::where('volunteer_id', $volunteer->id)->get();
+        $payments = DonorPayment::with('team')->where('volunteer_id', $volunteer->id)->get();
 
         return DonorPaymentResource::collection($payments);
 
@@ -89,28 +89,73 @@ class DonorPaymentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(DonorPayment $donorPayment)
+    public function show($id)
     {
-        return new DonorPaymentResource($donorPayment);
+        $payment = DonorPayment::with('team')->find($id);
+        if(!$payment)
+        {
+            return response()->json(['message' => 'Payment not found'], 404);
+        }
+    
+        
+    return new DonorPaymentResource($payment);
+        
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, DonorPayment $donorPayment)
+    public function update(Request $request, $id)
     {
+        $payment = DonorPayment::find($id);
+    
+        if (!$payment) {
+            return response()->json(['message' => 'Payment not found'], 404);
+        }
+    
         $request->validate([
-            'amount' => 'sometimes|numeric|min:0',
-            'payment_date' => 'sometimes|date',
-            'payment_method' => 'sometimes|string|max:255',
-            'status' => 'sometimes|in:pending,completed,failed',
-            'donor_id' => 'sometimes|exists:benefactors,id',
-            'team_id' => 'sometimes|exists:volunteer_teams,id',
+            'employee_id' => 'nullable|exists:employees,id',
+            'team_id' => 'required|exists:volunteer_teams,id',
+            'amount' => 'required|numeric',
+            'transfer_number' => 'required|string',
+            'type' => 'in:حوالة,كاش',
+            'status' => 'in:pending,accepted,rejected',
+            'payment_date' => 'nullable|date',
+            'image' => 'nullable|file|image|max:2048',
         ]);
-
-        $donorPayment->update($request->all());
-        return new DonorPaymentResource($donorPayment);
+    
+        // إذا تم رفع صورة جديدة
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('uploads/DonorPayment'), $imageName);
+            $imageRelativePath = 'uploads/DonorPayment/' . $imageName;
+    
+            // حذف الصورة القديمة إن وجدت (اختياري)
+            if ($payment->image && file_exists(public_path($payment->image))) {
+                unlink(public_path($payment->image));
+            }
+    
+            $payment->image = $imageRelativePath;
+        }
+    
+        // تحديث الحقول
+        $payment->update([
+            'employee_id' => $request->employee_id,
+            'team_id' => $request->team_id,
+            'amount' => $request->amount,
+            'transfer_number' => $request->transfer_number,
+            'type' => $request->type ?? $payment->type,
+            'status' => $request->status ?? $payment->status,
+            'payment_date' => $request->payment_date ?? $payment->payment_date,
+        ]);
+    
+        return response()->json([
+            'message' => 'Payment updated successfully',
+            'payment' => $payment,
+        ]);
     }
+
 
     /**
      * Remove the specified resource from storage.

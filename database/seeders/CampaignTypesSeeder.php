@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use app\Models\CampaignType;
+use App\Models\CampaignType;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\Attendance;
-use App\Models\Volunteer;
-use App\Models\Employee;
+use App\Models\Point;
 use App\Models\Campaign;
+use App\Models\Employee;
+use App\Models\Volunteer;
+use App\Models\Attendance;
+use App\Models\Certificate;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 
 class AttendanceController extends Controller
@@ -21,56 +23,117 @@ class AttendanceController extends Controller
         return response()->json($attendances);
     }
 
+    public function getAttendancesByCampaign($campaignId)
+    {
+        $attendances = Attendance::with(['volunteer', 'employee']) // إحضار العلاقات المطلوبة
+            ->where('campaign_id', $campaignId)
+            ->get();
+
+        return response()->json([
+            'message' => 'تم جلب الحضور والغياب بنجاح',
+            'attendances' => $attendances,
+        ]);
+    }
+
+
     /**
      * Store a newly created resource in storage.
      */
+  
+
     public function store(Request $request)
     {
         $request->validate([
-            'is_attended' => 'required|boolean',
-            'banned_point' => 'required|integer|min:0',
-            'date_of_attendance' => 'required|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'campaign_id' => 'required|exists:campaigns,id',
-            'employee_id' => 'required|exists:employees,id',
             'volunteer_id' => 'required|exists:volunteers,id',
+            'campaign_id' => 'required|exists:campaigns,id',
+            'is_attendance' => 'required|boolean',
+            'reason_of_change' => 'required|in:عذر,حضور,عدم حضور',
+            'image' => 'nullable|image',
         ]);
 
-        // Check if attendance already exists for this combination
-        $existingAttendance = Attendance::where('campaign_id', $request->campaign_id)
-            ->where('volunteer_id', $request->volunteer_id)
-            ->where('date_of_attendance', $request->date_of_attendance)
+        $existingAttendance = Attendance::where('volunteer_id', $request->volunteer_id)
+            ->where('campaign_id', $request->campaign_id)
             ->first();
 
         if ($existingAttendance) {
-            return response()->json(['message' => 'Attendance record already exists for this date'], 422);
+            return response()->json([
+                'message' => 'تم تسجيل الحضور مسبقًا لهذا المتطوع في هذه الحملة.',
+            ], 409);
         }
 
-        // Handle image upload if present
-        $imagePath = null;
+        $campaign = Campaign::findOrFail($request->campaign_id);
+        $volunteer = Volunteer::findOrFail($request->volunteer_id);
+        $points = 0;
+        $magnitudeChange = 'none';
+
+        if ($request->is_attendance) {
+            $points = $campaign->points;
+            $volunteer->increment('total_points', $points);
+            $magnitudeChange = '+' . $points;
+        } elseif ($request->reason_of_change === 'عدم حضور') {
+            $points = intval($campaign->points / 2);
+            $volunteer->decrement('total_points', $points);
+            $magnitudeChange = '-' . $points;
+        } elseif ($request->reason_of_change === 'عذر') {
+          
+            $magnitudeChange = '0';
+        }
+
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('attendance_images', 'public');
+            $image = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('attendances'), $imageName);
+            $imagePath = 'attendances/' . $imageName;
+        } else {
+            $imagePath = null;
         }
 
         $attendance = Attendance::create([
-            'is_attended' => $request->is_attended,
-            'banned_point' => $request->banned_point,
-            'date_of_attendance' => $request->date_of_attendance,
-            'image' => $imagePath,
-            'campaign_id' => $request->campaign_id,
-            'employee_id' => $request->employee_id,
             'volunteer_id' => $request->volunteer_id,
+            'campaign_id' => $request->campaign_id,
+            'employee_id' => auth()->user()->id,
+            'is_attendance' => $request->is_attendance,
+            'points_earned' => $request->is_attendance ? $campaign->points : 0,
+            'image' => $imagePath,
         ]);
 
-        // Update volunteer's points if attendance is marked as not attended
-        if (!$request->is_attended) {
-            $volunteer = Volunteer::findOrFail($request->volunteer_id);
-            $volunteer->total_points -= $request->banned_point;
-            $volunteer->save();
+        if ($volunteer->total_points >= 10) {
+        $existingCertificate = Certificate::where('volunteer_id', $request->volunteer_id)
+            ->where('points_threshold', 100)
+            ->first();
+
+        $certificatePath = 'certificates/volunteer_' . $request->volunteer_id . '.pdf';
+
+        if (!$existingCertificate) {
+          Certificate::create([
+                'volunteer_id' => $request->volunteer_id,
+                'level' => 'متطوع نشط',
+                'points_threshold' => 100,
+                'certificate_type' => 'تشجيعية', 
+                'issued_at' => now(),
+                'certificate_path' => $certificatePath,
+                'certificate_issued' => true,
+            ]);
+
+        }
+    }
+        if ($magnitudeChange !== '0' && $magnitudeChange !== 'none') {
+            Point::create([
+                'volunteer_id' => $request->volunteer_id,
+                'campaign_id' => $request->campaign_id,
+                'employee_id' => auth()->user()->id,
+                'points' => $points,
+                'magnitude_change' => $magnitudeChange,
+                'reason_of_change' => $request->reason_of_change,
+            ]);
         }
 
-        return response()->json($attendance, 201);
+        return response()->json([
+            'message' => 'تم تسجيل الحضور ومعالجة النقاط بنجاح',
+            'attendance' => $attendance,
+        ]);
     }
+
 
     /**
      * Display the specified resource.
@@ -84,55 +147,88 @@ class AttendanceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Attendance $attendance)
+    public function update(Request $request, $id)
     {
+
         $request->validate([
-            'is_attended' => 'sometimes|boolean',
-            'banned_point' => 'sometimes|integer|min:0',
-            'date_of_attendance' => 'sometimes|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'campaign_id' => 'sometimes|exists:campaigns,id',
-            'employee_id' => 'sometimes|exists:employees,id',
-            'volunteer_id' => 'sometimes|exists:volunteers,id',
+            'is_attendance' => 'required|boolean',
+            'reason_of_change' => 'required|in:عذر,حضور,عدم حضور',
+            'image' => 'nullable|image',
+
         ]);
 
-        // Store old values for point adjustment
-        $oldIsAttended = $attendance->is_attended;
-        $oldBannedPoint = $attendance->banned_point;
 
-        // Handle image update
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($attendance->image) {
-                Storage::disk('public')->delete($attendance->image);
-            }
-            $imagePath = $request->file('image')->store('attendance_images', 'public');
-            $attendance->image = $imagePath;
+
+        $attendance = Attendance::findOrFail($id);
+        $volunteer = Volunteer::findOrFail($attendance->volunteer_id);
+        $campaign = Campaign::findOrFail($attendance->campaign_id);
+
+        $oldPoints = $attendance->points_earned;
+
+        if ($attendance->is_attendance) {
+            $volunteer->decrement('total_points', $oldPoints);
+        } elseif ($attendance->reason_of_change === 'عدم حضور') {
+            $volunteer->increment('total_points', intval($campaign->points / 2));
         }
 
-        $attendance->update($request->except('image'));
+        $newPoints = 0;
+        $magnitudeChange = 'none';
 
-        // Update volunteer's points if attendance status changed
-        if ($request->has('is_attended') || $request->has('banned_point')) {
-            $volunteer = Volunteer::findOrFail($attendance->volunteer_id);
-            
-            if ($oldIsAttended && !$request->is_attended) {
-                // Was attended, now not attended - subtract points
-                $volunteer->total_points -= $request->banned_point;
-            } elseif (!$oldIsAttended && $request->is_attended) {
-                // Was not attended, now attended - add back points
-                $volunteer->total_points += $oldBannedPoint;
-            } elseif (!$oldIsAttended && !$request->is_attended && $request->has('banned_point')) {
-                // Was not attended, still not attended but banned points changed
-                $volunteer->total_points += $oldBannedPoint; // Add back old points
-                $volunteer->total_points -= $request->banned_point; // Subtract new points
-            }
-            
-            $volunteer->save();
+        if ($request->is_attendance) {
+            $newPoints = $campaign->points;
+            $volunteer->increment('total_points', $newPoints);
+            $magnitudeChange = '+' . $newPoints;
+        } elseif ($request->reason_of_change === 'عدم حضور') {
+            $newPoints = intval($campaign->points / 2);
+            $volunteer->decrement('total_points', $newPoints);
+            $magnitudeChange = '-' . $newPoints;
+        } elseif ($request->reason_of_change === 'عذر') {
+            $magnitudeChange = '0';
         }
 
-        return response()->json($attendance);
+      if ($request->hasFile('image')) {
+            if ($attendance->image && file_exists(public_path($attendance->image))) {
+                unlink(public_path($attendance->image));
+            }
+
+            $image = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('attendances'), $imageName);
+            $imagePath = 'attendances/' . $imageName;
+        } else {
+            $imagePath = $attendance->image;
+        }
+
+
+        $attendance->update([
+
+            'is_attendance' => $request->is_attendance,
+            'points_earned' => $request->is_attendance ? $campaign->points : 0,
+            'image' => $imagePath,
+            
+        ]);
+
+        Point::where('volunteer_id', $attendance->volunteer_id)
+            ->where('campaign_id', $attendance->campaign_id)
+            ->delete();
+
+        if ($magnitudeChange !== '0' && $magnitudeChange !== 'none') {
+            Point::create([
+                'volunteer_id' => $attendance->volunteer_id,
+                'campaign_id' => $attendance->campaign_id,
+                'employee_id' => auth()->user()->id,
+                'points' => $newPoints,
+                'magnitude_change' => $magnitudeChange,
+                'reason_of_change' => $request->reason_of_change,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'تم تحديث الحضور ومعالجة النقاط بنجاح',
+            'attendance' => $attendance,
+        ]);
     }
+
 
     /**
      * Remove the specified resource from storage.

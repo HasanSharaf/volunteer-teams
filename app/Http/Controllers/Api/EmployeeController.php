@@ -175,13 +175,25 @@ class EmployeeController extends Controller
         return DonorPaymentResource::collection($employee->donorPayments()->paginate(10));
     }
 
-    public function getEmployeeCampaigns()
+    public function getEmployeeCampaignspending()
     {
+     
         $employee = auth()->user(); 
         $campaigns = $employee->team->campaigns;
-        $campaigns = Campaign::with(['specialization', 'campaignType', 'team', 'employee', 'volunteers'])->get();
+        $campaigns = Campaign::where('status','pending')->with(['specialization', 'campaignType', 'team', 'employee', 'volunteers'])->get();
+        return CampaignResource::collection($campaigns);
+        
+    }
+    public function getEmployeeCampaignsDone()
+    {
+     
+        $employee = auth()->user(); 
+        $campaigns = $employee->team->campaigns;
+        $campaigns = Campaign::where('status','done')->with(['specialization', 'campaignType', 'team', 'employee', 'volunteers'])->get();
         return CampaignResource::collection($campaigns);
         
     }
 
+
+    
 } 
