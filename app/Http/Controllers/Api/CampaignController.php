@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Campaign;
+use App\Models\ChatRoom;
+use App\Models\Employee;
 use App\Models\Volunteer;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\CampaignResource;
 use App\Http\Resources\VolunteerResource;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\CampaignFullNotification;
 
 class CampaignController extends Controller
 {
@@ -151,25 +155,72 @@ class CampaignController extends Controller
         return VolunteerResource::collection($campaign->volunteers()->paginate(10));
     }
 
-    public function addVolunteer(Campaign $campaign, Volunteer $volunteer)
+
+
+
+    public function addVolunteer($id)
     {
-        if ($campaign->volunteers()->where('volunteer_id', $volunteer->id)->exists()) {
-            return response()->json(['message' => 'Volunteer is already assigned to this campaign'], 422);
+        $volunteerId = auth()->id();
+
+        $campaign = Campaign::find($id);
+
+        if (!$campaign) {
+            return response()->json(['message' => 'Campaign not found'], 404);
         }
 
-        $campaign->volunteers()->attach($volunteer->id);
-
-        return response()->json(['message' => 'Volunteer added to campaign successfully']);
-    }
-
-    public function removeVolunteer(Campaign $campaign, Volunteer $volunteer)
-    {
-        if (!$campaign->volunteers()->where('volunteer_id', $volunteer->id)->exists()) {
-            return response()->json(['message' => 'Volunteer is not assigned to this campaign'], 422);
+        if ($campaign->volunteers()->where('volunteer_id', $volunteerId)->exists()) {
+            return response()->json(['message' => 'You have already joined this campaign'], 422);
         }
 
-        $campaign->volunteers()->detach($volunteer->id);
+        if ($campaign->volunteers()->count() >= $campaign->number_of_volunteer) {
+            return response()->json(['message' => 'Campaign is already full'], 422);
+        }
 
-        return response()->json(['message' => 'Volunteer removed from campaign successfully']);
+        $campaign->volunteers()->attach($volunteerId);
+
+        if ($campaign->volunteers()->count() >= $campaign->number_of_volunteer) {
+            $employee = $campaign->employee;
+
+            if ($employee) {
+                Notification::send($employee, new CampaignFullNotification($campaign));
+
+                $chatRoom = ChatRoom::create([
+                    'campaign_id' => $campaign->id,
+                    'employee_id' => $campaign->employee_id,
+                ]);
+
+                foreach ($campaign->volunteers as $v) {
+                    $chatRoom->volunteers()->attach($v->id, ['user_type' => 'App\\Models\\Volunteer']);
+                }
+
+                $chatRoom->volunteers()->attach($employee->id, ['user_type' => 'App\\Models\\Employee']);
+            }
+        }
+
+        return response()->json(['message' => 'You have joined the campaign successfully']);
     }
+
+
+
+
+    public function removeVolunteer($id)
+    {
+        $volunteerId = auth()->id();
+
+        $campaign = Campaign::find($id);
+
+        if (!$campaign) {
+            return response()->json(['message' => 'Campaign not found'], 404);
+        }
+
+        // التحقق ما إذا كان المتطوع مسجلًا في الحملة
+        if (! $campaign->volunteers()->where('volunteer_id', $volunteerId)->exists()) {
+            return response()->json(['message' => 'You are not registered in this campaign'], 422);
+        }
+
+        $campaign->volunteers()->detach($volunteerId);
+
+        return response()->json(['message' => 'You have been removed from the campaign successfully']);
+    }
+
 } 

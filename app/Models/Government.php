@@ -9,10 +9,13 @@ use Laravel\Sanctum\HasApiTokens;
 class Government extends Authenticatable
 {
     use HasApiTokens, HasFactory;
+    
+
 
     protected $fillable = [
         'email',
         'password',
+        'name',
     ];
 
     protected $hidden = [

@@ -2,25 +2,27 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\OTPController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\CampaignTypeController;
-use App\Http\Controllers\Api\SpecializationController;
-use App\Http\Controllers\Api\VolunteerTeamController;
-use App\Http\Controllers\Api\BusinessInformationController;
-use App\Http\Controllers\Api\VolunteerController;
-use App\Http\Controllers\Api\EmployeeController;
-use App\Http\Controllers\Api\CampaignController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\PointController;
 use App\Http\Controllers\Api\RequestController;
+use App\Http\Controllers\Api\CampaignController;
+use App\Http\Controllers\Api\ContractController;
+use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\FinancialController;
+use App\Http\Controllers\Api\VolunteerController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\BenefactorController;
-use App\Http\Controllers\Api\DonorPaymentController;
-use App\Http\Controllers\Api\FinancialController;
-use App\Http\Controllers\Api\ChatController;
-use App\Http\Controllers\Api\ContractController;
-use App\Http\Controllers\Api\OTPController;
 use App\Http\Controllers\Api\GovernmentController;
+use App\Http\Controllers\Api\CertificateController;
+use App\Http\Controllers\Api\CampaignTypeController;
+use App\Http\Controllers\Api\DonorPaymentController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\VolunteerTeamController;
 use App\Http\Controllers\Api\GovernmentAuthController;
+use App\Http\Controllers\Api\SpecializationController;
+use App\Http\Controllers\Api\BusinessInformationController;
 
 // Public routes
 Route::post('/volunteer/register', [AuthController::class, 'volunteerRegister']);
@@ -34,7 +36,12 @@ Route::post('/update/Password', [OTPController::class, 'updatePasswordForVolunte
 
 Route::post('employee/login', [VolunteerTeamController::class, 'LoginEmployee']);
 
+ // Campaign Types routes
+ Route::apiResource('campaign-types', CampaignTypeController::class);
 
+ // Specializations routes
+ Route::apiResource('specializations', SpecializationController::class);
+ 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     //volunteer
@@ -45,11 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
-    // Campaign Types routes
-    Route::apiResource('campaign-types', CampaignTypeController::class);
-
-    // Specializations routes
-    Route::apiResource('specializations', SpecializationController::class);
+   
 
     // Volunteer Teams routes
     Route::apiResource('volunteer-teams', VolunteerTeamController::class);
@@ -65,16 +68,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('campaigns', CampaignController::class);
     Route::get('get/campaigns/By/Specialty', [CampaignController::class,'getcampaignsBySpecialty']);
     Route::post('campaigns/{campaign}/volunteers', [CampaignController::class, 'addVolunteer']);
-    Route::delete('campaigns/{campaign}/volunteers/{volunteer}', [CampaignController::class, 'removeVolunteer']);
+    Route::delete('campaigns/{id}/volunteers', [CampaignController::class, 'removeVolunteer']);
+
+
+    // notifications routes
+    Route::get('/notifications', [NotificationController::class, 'index']);
 
     // Points routes
     Route::apiResource('points', PointController::class);
 
     // Requests routes
     Route::apiResource('requests', RequestController::class);
+    Route::get('get-requests-team', [RequestController::class,'indexForEmployee']);
 
+    
     // Attendances routes
     Route::apiResource('attendances', AttendanceController::class);
+
+    Route::post('/attendances/{id}', [AttendanceController::class, 'update']);
+    Route::get('/attendances/campaign/{id}', [AttendanceController::class, 'getAttendancesByCampaign']);
+
+    ///Certificate
+    Route::get('generateCertificate',[CertificateController ::class,'generateCertificate']);
 
     // Benefactors routes
     Route::apiResource('benefactors', BenefactorController::class);
@@ -88,6 +103,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Chats routes
     Route::apiResource('chats', ChatController::class);
 
+    Route::post('send-message/{chat_room}', [ChatController::class,'sendMessage']);
+
+    Route::get('get-Messages/{chat_room}', [ChatController::class,'getMessages']);
+
+    Route::get('my-chat-rooms', [ChatController::class,'myChatRooms']);
+
+
+     
     // Contracts routes
     Route::apiResource('contracts', ContractController::class);
 
@@ -97,7 +120,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('store/employee',[VolunteerTeamController::class,'storeEmployee']);
     Route::get('employee/profile',[EmployeeController::class,'profileEmployee']);
     Route::put('employee/update',[EmployeeController::class,'updateEmployee']);
-    Route::get('get-employee-campaigns',[EmployeeController::class,'getEmployeeCampaigns']);
+    Route::get('get-employee-campaigns-pending',[EmployeeController::class,'getEmployeeCampaignsPending']);
+    Route::get('get-employee-campaigns-done',[EmployeeController::class,'getEmployeeCampaignsDone']);
+
     Route::post('campaigns/create', [CampaignController::class, 'storeCampaign']);
 });
 

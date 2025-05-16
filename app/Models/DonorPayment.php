@@ -19,11 +19,12 @@ class DonorPayment extends Model
 
     public function volunter(): BelongsTo
     {
-        return $this->belongsTo(Volunteer::class);
+        return $this->belongsTo(Volunteer::class,'volunteer_id');
     }
 
+
     protected $casts = [
-        'payment_date' => 'date',
+       
         'amount' => 'decimal:2'
     ];
 

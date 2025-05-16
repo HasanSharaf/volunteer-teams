@@ -29,11 +29,11 @@ class GovernmentController extends Controller
         $teams = VolunteerTeam::where('status', 'accepted')
             ->get()
             ->map(function ($team) {
-                return [
+                 return [
                     'id' => $team->id,
                     'name' => $team->full_name,
-                    'team_name' => $team->team_name,
-                    'address' => $team->address,
+                    'team_name' => $team->businessInformation->team_name,
+                    'address' => $team->businessInformation->address,
                     'created_at' => $team->created_at,
                 ];
             });
@@ -104,12 +104,13 @@ class GovernmentController extends Controller
             'data' => [
                 'id' => $team->id,
                 'full_name' => $team->full_name,
-                'team_name' => $team->team_name,
-                'license_number' => $team->license_number,
+                'team_name' => $team->businessInformation->team_name,
+
+                'license_number' => $team->businessInformation->license_number,
                 'phone' => $team->phone,
-                'bank_account_number' => $team->bank_account_number,
+                'bank_account_number' => $team->businessInformation->bank_account_number,
                 'email' => $team->email,
-                'address' => $team->address,
+                'address' => $team->businessInformation->address,
                 'status' => $team->status,
                 'total_finance' => $team->campaigns->flatMap->financials->sum('amount'),
                 'total_campaigns' => $team->campaigns->count(),
@@ -119,26 +120,35 @@ class GovernmentController extends Controller
         ]);
     }
 
-    public function getListTeamFinance(VolunteerTeam $team)
+     public function getListTeamFinance($id)
     {
-        $payments = DonorPayment::where('team_id', $team->id)
-            ->with('benefactor')
+        $payments = DonorPayment::where('team_id', $id)
+            ->with(['benefactor', 'volunter'])  
             ->get()
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'name' => $payment->benefactor->name,
+                    'name' => optional($payment->benefactor)->name ?? optional($payment->volunter)->full_name ,
                     'details' => $payment->type,
                     'date' => $payment->payment_date,
                     'cost' => $payment->amount,
                 ];
             });
-
+    
+        if ($payments->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No payments found'
+            ]);
+        }
+    
         return response()->json([
             'success' => true,
             'data' => $payments
         ]);
     }
+
+
 
     public function getTotalTeamFinance(VolunteerTeam $team)
     {

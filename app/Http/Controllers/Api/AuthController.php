@@ -238,12 +238,13 @@ class AuthController extends Controller
     
         $team = VolunteerTeam::where('email', $request->email)->first();
     
-        if (!$team || $team->status !== "accepted") {
+        
+        if (!$team) {
             return response()->json([
-                'message' => 'The provided credentials are incorrect.',
-            ], 403);
+                'message' => 'Team with this email not found'
+            ], 404);
         }
-    
+        
         if ($team->status == "rejected" || $team->status ==  "pending") {
             return response()->json([
                 'message' => 'عذرًا، حسابك غير مفعل.',
