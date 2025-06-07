@@ -100,6 +100,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Financials routes
     Route::apiResource('financials', FinancialController::class);
 
+    Route::get('getDonations/{id}',[FinancialController::class,'getDonations']);
+    Route::post('update/StutasDonations/{id}',[FinancialController::class,'updatestutas']);
+
+
+    
     // Chats routes
     Route::apiResource('chats', ChatController::class);
 
