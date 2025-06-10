@@ -112,9 +112,13 @@ class GovernmentController extends Controller
                 'email' => $team->email,
                 'address' => $team->businessInformation->address,
                 'status' => $team->status,
-                'total_finance' => $team->campaigns->flatMap->financials->sum('amount'),
+                'total_finance' => optional($team->financial)->total_amount ?? 0,
+
                 'total_campaigns' => $team->campaigns->count(),
                 'total_employees' => $team->employees->count(),
+
+                'total_campaigns_rejected' => $team->campaigns->where('status','rejected')->count(),
+                'total_campaigns_done' => $team->campaigns->whereIn('status',['done','pending'])->count(),
                 'created_at' => $team->created_at,
             ]
         ]);

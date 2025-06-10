@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Campaign;
 use App\Models\ChatRoom;
 use App\Models\Employee;
+use App\Models\Financial;
 use App\Models\Volunteer;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -13,6 +14,7 @@ use App\Http\Resources\CampaignResource;
 use App\Http\Resources\VolunteerResource;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\CampaignFullNotification;
+use Illuminate\Support\Facades\DB;
 
 class CampaignController extends Controller
 {
@@ -49,27 +51,55 @@ class CampaignController extends Controller
             'specialization_id' => 'nullable|exists:specializations,id',
             'campaign_type_id' => 'required|exists:campaign_types,id',
         ]);
-    
+
         $employee = Auth::user();
-    
         $team_id = $employee->team_id;
-    
-        $campaign = Campaign::create([
-            'campaign_name' => $request->campaign_name,
-            'number_of_volunteer' => $request->number_of_volunteer,
-            'cost' => $request->cost,
-            'address' => $request->address,
-            'from' => $request->from,
-            'to' => $request->to,
-            'points' => $request->points,
-            'status' => 'pending',
-            'specialization_id' => $request->specialization_id,
-            'campaign_type_id' => $request->campaign_type_id,
-            'team_id' => $team_id, 
-            'employee_id' => $employee->id, 
-        ]);
-    
-        return response()->json(['campaign' => $campaign], 201);
+
+        DB::beginTransaction();
+        try {
+                $financial = Financial::where('team_id', $team_id)->first();
+
+                if (!$financial) {
+                    return response()->json(['message' => 'لا توجد بيانات مالية للفريق'], 404);
+                }
+
+                if ($request->cost > $financial->total_amount) {
+                    return response()->json(['message' => 'الرصيد المتوفر لا يكفي لتغطية تكلفة الحملة'], 422);
+                }
+
+            $campaign = Campaign::create([
+                'campaign_name' => $request->campaign_name,
+                'number_of_volunteer' => $request->number_of_volunteer,
+                'cost' => $request->cost,
+                'address' => $request->address,
+                'from' => $request->from,
+                'to' => $request->to,
+                'points' => $request->points,
+                'status' => 'pending',
+                'specialization_id' => $request->specialization_id,
+                'campaign_type_id' => $request->campaign_type_id,
+                'team_id' => $team_id,
+                'employee_id' => $employee->id,
+            ]);
+
+            $financial = Financial::where('team_id', $team_id)->first();
+
+              $financial = Financial::where('team_id', $team_id)->first();
+
+        if ($financial) {
+            $financial->total_amount -= $request->cost;
+            $financial->payment = $request->cost;
+            $financial->save();
+        }
+
+            DB::commit();
+
+            return response()->json(['campaign' => $campaign], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+
+        }
     }
 
     public function show($id)
@@ -89,9 +119,8 @@ class CampaignController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+        public function update(Request $request, $id)
     {
-        // التحقق من صحة البيانات المدخلة
         $request->validate([
             'campaign_name' => 'nullable|string|max:255',
             'number_of_volunteer' => 'nullable|integer',
@@ -103,31 +132,73 @@ class CampaignController extends Controller
             'specialization_id' => 'nullable|exists:specializations,id',
             'campaign_type_id' => 'nullable|exists:campaign_types,id',
         ]);
-    
-        // البحث عن الحملة باستخدام الـ ID
+
         $campaign = Campaign::find($id);
-    
-        // إذا لم يتم العثور على الحملة، نرجع رسالة خطأ
+
         if (!$campaign) {
-            return response()->json(['message' => 'Campaign not found'], 404);
+            return response()->json(['message' => 'الحملة غير موجودة'], 404);
         }
-    
-        // تحديث الحملة بالقيم الجديدة أو الاحتفاظ بالقيم القديمة إذا كانت الحقول فارغة
-        $campaign->update([
-            'campaign_name' => $request->campaign_name ?: $campaign->campaign_name,
-            'number_of_volunteer' => $request->number_of_volunteer ?: $campaign->number_of_volunteer,
-            'cost' => $request->cost ?: $campaign->cost,
-            'address' => $request->address ?: $campaign->address,
-            'from' => $request->from ?: $campaign->from,
-            'to' => $request->to ?: $campaign->to,
-            'points' => $request->points ?: $campaign->points,
-            'specialization_id' => $request->specialization_id ?: $campaign->specialization_id,
-            'campaign_type_id' => $request->campaign_type_id ?: $campaign->campaign_type_id,
-        ]);
-    
-        // إرجاع الحملة المحدثة
-        return response()->json(['campaign' => $campaign], 200);
+
+        $employee = auth()->user();
+        $teamId = $employee->team_id;
+
+        $financial = Financial::where('team_id', $teamId)->first();
+
+        // التأكد من وجود financial
+        if (!$financial) {
+            return response()->json(['message' => 'لا توجد بيانات مالية لهذا الفريق'], 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // معالجة التغيير في التكلفة
+            if ($request->has('cost')) {
+                $newCost = floatval($request->cost);
+                $currentCost = floatval($campaign->cost);
+
+                if ($newCost > $currentCost) {
+                    $diff = $newCost - $currentCost;
+
+                    if ($diff > $financial->total_amount) {
+                        return response()->json(['message' => 'الرصيد المتوفر لا يكفي لتغطية الفرق في التكلفة'], 422);
+                    }
+
+                    $financial->total_amount -= $diff;
+                    $financial->payment += $diff;
+                } elseif ($newCost < $currentCost) {
+                    $refund = $currentCost - $newCost;
+
+                    $financial->total_amount += $refund;
+                    $financial->payment -= $refund;
+                }
+
+                $financial->save();
+            }
+
+            // تحديث الحقول غير الفارغة فقط
+            $campaign->update(array_filter([
+                'campaign_name' => $request->campaign_name,
+                'number_of_volunteer' => $request->number_of_volunteer,
+                'cost' => $request->cost,
+                'address' => $request->address,
+                'from' => $request->from,
+                'to' => $request->to,
+                'points' => $request->points,
+                'specialization_id' => $request->specialization_id,
+                'campaign_type_id' => $request->campaign_type_id,
+            ], fn($value) => $value !== null && $value !== ''));
+
+            DB::commit();
+
+            return response()->json(['campaign' => $campaign], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'حدث خطأ', 'error' => $e->getMessage()], 500);
+        }
     }
+
     
     
 
