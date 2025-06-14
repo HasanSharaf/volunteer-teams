@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Employee;
 use App\Models\Financial;
 use App\Models\Volunteer;
+use App\Models\Campaign;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use App\Models\VolunteerTeam;
@@ -153,7 +154,7 @@ class VolunteerTeamController extends Controller
         ]);
     }
 
-    public function getTeamStatistics()
+  public function getTeamStatistics()
     {
         $team = VolunteerTeam::find(Auth::id());
         
@@ -164,22 +165,23 @@ class VolunteerTeamController extends Controller
             ], 404);
         }
 
-        // Load relationships
         $team->load(['financial', 'employees', 'contracts', 'campaigns']);
 
-        // Calculate campaign statistics
         $totalCampaigns = $team->campaigns->count();
         $completedCampaigns = $team->campaigns->where('status', 'done')->count();
         $uncompletedCampaigns = $team->campaigns->where('status', '!=', 'done')->count();
 
-        $completedPercentage = $totalCampaigns > 0 ? ($completedCampaigns / $totalCampaigns) * 100 : 0;
-        $uncompletedPercentage = $totalCampaigns > 0 ? ($uncompletedCampaigns / $totalCampaigns) * 100 : 0;
+        $total = $completedCampaigns + $uncompletedCampaigns;
+
+        $completedPercentage = $total > 0 ? ($completedCampaigns / $total) * 100 : 0;
+        $uncompletedPercentage = $total > 0 ? ($uncompletedCampaigns / $total) * 100 : 0;
 
         return response()->json([
             'success' => true,
             'data' => [
                 'finance' => [
-                    'total_price' => $team->financial ? $team->financial->total_amount : 0
+                    'total_price' => $team->financial ? $team->financial->total_amount : 0,
+                    'payment' => $team->financial ? $team->financial->payment : 0
                 ],
                 'employees' => [
                     'total_count' => $team->employees->count()
@@ -198,10 +200,10 @@ class VolunteerTeamController extends Controller
         ]);
     }
 
+
     public function getTeamCampaigns()
     {
-        $team = VolunteerTeam::find(Auth::id());
-        
+        $team = Auth::user(); 
         if (!$team) {
             return response()->json([
                 'success' => false,
@@ -209,31 +211,37 @@ class VolunteerTeamController extends Controller
             ], 404);
         }
 
-        $team->load(['campaigns' => function($query) {
-            $query->with('campaignType');
-        }]);
+        $completedCampaigns = Campaign::where('team_id', $team->id)
+            ->whereIn('status', ['done', 'rejected'])
+            ->with('campaignType')
+            ->get()
+            ->map(function ($campaign) {
+                return [
+                    'id' => $campaign->id,
+                    'name' => $campaign->campaign_name,
+                    'status'=> $campaign->status,
+                    'location' => $campaign->address,
+                    'date' => $campaign->from,
+                    'category' => optional($campaign->campaignType)->name,
+                    'cost' => $campaign->cost,
+                ];
+            });
 
-        $completedCampaigns = $team->campaigns->where('status', 'done')->map(function($campaign) {
-            return [
-                'id' => $campaign->id,
-                'name' => $campaign->campaign_name,
-                'location' => $campaign->address,
-                'date' => $campaign->from,
-                'category' => $campaign->campaignType->name,
-                'cost' => $campaign->cost,
-            ];
-        });
-
-        $uncompletedCampaigns = $team->campaigns->where('status', '!=', 'done')->map(function($campaign) {
-            return [
-                'id' => $campaign->id,
-                'name' => $campaign->campaign_name,
-                'location' => $campaign->address,
-                'date' => $campaign->from,
-                'category' => $campaign->campaignType->name,
-                'cost' => $campaign->cost,
-            ];
-        });
+        $uncompletedCampaigns = Campaign::where('team_id', $team->id)
+            ->whereNotIn('status', ['done', 'rejected'])
+            ->with('campaignType')
+            ->get()
+            ->map(function ($campaign) {
+                return [
+                    'id' => $campaign->id,
+                    'name' => $campaign->campaign_name,
+                    'status'=> $campaign->status,
+                    'location' => $campaign->address,
+                    'date' => $campaign->from,
+                    'category' => optional($campaign->campaignType)->name,
+                    'cost' => $campaign->cost,
+                ];
+            });
 
         return response()->json([
             'success' => true,

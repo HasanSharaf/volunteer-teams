@@ -184,6 +184,7 @@ class GovernmentController extends Controller
                     'id' => $campaign->id,
                     'name' => $campaign->campaign_name,
                     'location' => $campaign->address,
+                    'status'=> $campaign->status,
                     'date' => $campaign->from,
                     'category' => $campaign->campaignType->name,
                     'cost' => $campaign->cost,
@@ -192,7 +193,8 @@ class GovernmentController extends Controller
             });
 
         $completedCampaigns = Campaign::where('team_id', $team->id)
-            ->where('status', 'done')
+            ->whereIn('status',['done','rejected'])
+            
             ->with('campaignType')
             ->get()
             ->map(function ($campaign) {
@@ -200,9 +202,11 @@ class GovernmentController extends Controller
                     'id' => $campaign->id,
                     'name' => $campaign->campaign_name,
                     'location' => $campaign->address,
+                    'status'=> $campaign->status,
                     'date' => $campaign->from,
                     'category' => $campaign->campaignType->name,
                     'cost' => $campaign->cost,
+                    
                     // 'supplies' => $campaign->description,
                 ];
             });
