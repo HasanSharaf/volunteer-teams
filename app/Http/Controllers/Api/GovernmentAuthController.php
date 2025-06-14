@@ -57,7 +57,10 @@ class GovernmentAuthController extends Controller
             'success' => true,
             'message' => 'Government user logged in successfully',
             'data' => [
-                'government' => $government,
+                  'government' => [
+                    ...$government->toArray(),
+                    'role' => 'Government'
+                ],
                 'token' => $token
             ]
         ]);

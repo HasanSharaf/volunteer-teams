@@ -214,8 +214,9 @@ class AuthController extends Controller
             DB::commit();
     
             return response()->json([
+                'success'=> true,
                 'message' => 'Team registered successfully',
-                'team' => $volunteerTeam,
+                'data' => $volunteerTeam,
                 'business_info' => $businessInfo,
             ], 201);
     
@@ -260,10 +261,17 @@ class AuthController extends Controller
         $token = $team->createToken('auth_token')->plainTextToken;
     
         return response()->json([
-            'message' => 'Team logged in successfully',
-            'team' => $team,
-            'token' => $token,
+            'success' => true,
+            'message' => 'Team  logged in successfully',
+            'data' => [
+                  'team' => [
+                    ...$team->toArray(),
+                    'role' => 'Admin'
+                ],
+                'token' => $token
+            ]
         ]);
+   
     }
     
     public function logout(Request $request)

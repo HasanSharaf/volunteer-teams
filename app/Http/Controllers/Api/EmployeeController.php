@@ -34,6 +34,41 @@ class EmployeeController extends Controller
         return response()->json($employees);
     }
 
+    public function update(Request $request, $id)
+    {
+        $employee = Employee::findOrFail($id);
+
+        $request->validate([
+            'full_name' => 'sometimes|required|string',
+            'email' => 'sometimes|required|email|unique:employees,email,' . $employee->id,
+            'password' => 'sometimes|nullable|min:6',
+            'national_number' => 'nullable|unique:employees,national_number,' . $employee->id,
+            'position' => 'sometimes|required|in:مشرف,موظف مالي',
+            'phone' => 'sometimes|required|string',
+            'address' => 'nullable|string',
+            'date_accession' => 'sometimes|required|date',
+            'image' => 'nullable|string',
+            'team_id' => 'sometimes|required|exists:volunteer_teams,id',
+            'specialization_id' => 'nullable|exists:specializations,id',
+        ]);
+
+        $employee->update([
+            'full_name' => $request->full_name ?? $employee->full_name,
+            'email' => $request->email ?? $employee->email,
+            'password' => $request->filled('password') ? Hash::make($request->password) : $employee->password,
+            'national_number' => $request->national_number ?? $employee->national_number,
+            'position' => $request->position ?? $employee->position,
+            'phone' => $request->phone ?? $employee->phone,
+            'address' => $request->address ?? $employee->address,
+            'date_accession' => $request->date_accession ?? $employee->date_accession,
+            'image' => $request->image ?? $employee->image,
+            'team_id' => $request->team_id ?? $employee->team_id,
+            'specialization_id' => $request->specialization_id ?? $employee->specialization_id,
+        ]);
+
+        return response()->json(['employee' => $employee]);
+    }
+
 
     public function store(Request $request)
     {
@@ -133,26 +168,17 @@ class EmployeeController extends Controller
         return response()->json(['employee' => $employee], 200);
     }
 
-    public function update(Request $request, Employee $employee)
-    {
-        $request->validate([
-            'full_name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string',
-            'national_id' => 'sometimes|string|unique:employees,national_id,' . $employee->id,
-            'position' => 'sometimes|string',
-            'date_of_access' => 'sometimes|date',
-            'team_id' => 'sometimes|exists:volunteer_teams,id',
-            'specialization_id' => 'sometimes|exists:specializations,id',
-        ]);
 
-        $employee->update($request->all());
-        return response()->json($employee);
-    }
 
     public function destroy(Employee $employee)
     {
         $employee->delete();
-        return response()->json(null, 204);
+        return response()->json(
+            [
+                'success'=>true,
+                'message'=>'Employee deleted successfully'
+            ]
+        );
     }
 
     public function campaigns(Employee $employee)
